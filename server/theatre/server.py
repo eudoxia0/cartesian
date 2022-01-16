@@ -40,7 +40,7 @@ from theatre.db import (
     create_link,
     get_object_property,
     delete_links_from,
-    edit_property, update_object, class_property_exists, delete_class_property,
+    edit_property, update_object, class_property_exists, delete_class_property, list_objects_in_directory,
 )
 
 from flask import (
@@ -673,6 +673,12 @@ def delete_directory(dir_id: int):
             f"The directory with the ID '{dir_id}' was not found in the database.",
         )
 
+@bp.route("/api/directories/<int:dir_id>/objects", methods=["GET"])
+def list_objects_in_directory_endpoint(dir_id: int):
+    return {
+        "error": None,
+        "data": [obj.to_json() for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)],
+    }
 
 #
 # Class endpoints

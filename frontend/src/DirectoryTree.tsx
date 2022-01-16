@@ -6,6 +6,7 @@ import { useAppSelector, useAppDispatch, selectDirectoryList, replaceDirectoryLi
 import { Emoji } from "emoji-mart";
 import Modal from "./Modal";
 import IconWidget from "./IconWidget";
+import { Link } from "react-router-dom";
 
 interface TreeNode {
     id: number;
@@ -194,7 +195,9 @@ export default function DirectoryTree() {
                             : <img src="/blue-folder.png" alt="" />
                         }
                         <div className={styles.text}>
-                            {node.text}
+                            <Link to={`/directories/${node.id}`}>
+                                {node.text}
+                            </Link>
                         </div>
                         <div className={styles.spacer}></div>
                         <img

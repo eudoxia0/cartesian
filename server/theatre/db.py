@@ -415,6 +415,37 @@ def list_objects(conn: Connection) -> List[ObjectRec]:
     ]
 
 
+def list_objects_in_directory(conn: Connection, dir_id: int) -> List[ObjectRec]:
+    cur: Cursor = conn.cursor()
+    rows: List[Tuple] = cur.execute(
+        """
+        select
+            id, title, class_id, icon_emoji, created_at, modified_at
+        from
+            objects
+        where
+            directory_id = :directory_id 
+        order by
+            id asc;
+        """,
+        {
+            "directory_id": dir_id,
+        }
+    ).fetchall()
+    return [
+        ObjectRec(
+            id=row["id"],
+            title=row["title"],
+            class_id=row["class_id"],
+            directory_id=dir_id,
+            icon_emoji=row["icon_emoji"],
+            created_at=row["created_at"],
+            modified_at=row["modified_at"],
+        )
+        for row in rows
+    ]
+
+
 def get_object_by_title(conn: Connection, title: str) -> Optional[ObjectRec]:
     cur: Cursor = conn.cursor()
     rows: List[Tuple] = cur.execute(

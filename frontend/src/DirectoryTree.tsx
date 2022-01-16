@@ -1,9 +1,11 @@
-import { MouseEvent } from "react";
+import { MouseEvent, useState } from "react";
 import { Tree } from "@minoru/react-dnd-treeview";
 import styles from "./DirectoryTree.module.css";
 import { DirectoryRec } from "./types";
 import { useAppSelector, useAppDispatch, selectDirectoryList, replaceDirectoryList } from "./store";
 import { Emoji } from "emoji-mart";
+import Modal from "./Modal";
+import IconWidget from "./IconWidget";
 
 interface TreeNode {
     id: number;
@@ -34,7 +36,7 @@ function fromTree(tree: TreeNode): DirectoryRec {
         id: tree.id,
         title: tree.text,
         icon_emoji: tree.data.icon_emoji,
-        parent_id: tree.parent,
+        parent_id: (tree.parent === ROOT_ID) ? null : tree.parent,
     }
 }
 
@@ -61,6 +63,12 @@ function DownArrow() {
 export default function DirectoryTree() {
     const directoryList = useAppSelector(selectDirectoryList);
     const dispatch = useAppDispatch();
+
+    const [showEdit, setShowEdit] = useState<boolean>(false);
+    const [editDir, setEditDir] = useState<DirectoryRec | null>(null);
+    const [editEmoji, setEditEmoji] = useState<string>("");
+    const [editTitle, setEditTitle] = useState<string>("");
+
 
     function handleDrop(newTreeData: Array<TreeNode>) {
         newTreeData.forEach((tree: TreeNode) =>
@@ -124,6 +132,51 @@ export default function DirectoryTree() {
             });
     }
 
+    function handleEditDirectory(dir: DirectoryRec) {
+        setEditDir(dir);
+        setEditTitle(dir.title);
+        setEditEmoji(dir.icon_emoji);
+        setShowEdit(true);
+    }
+
+    function handleSaveDirectoryChanges() {
+        setShowEdit(false);
+        const dir = editDir!;
+        const newTitle = editTitle;
+        const newEmoji = editEmoji;
+        setEditDir(null);
+        setEditTitle("");
+        setEditEmoji("");
+        fetch(`http://localhost:5000/api/directories/${dir.id}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    "title": newTitle,
+                    "parent_id": dir.parent_id,
+                    "icon_emoji": newEmoji,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    window.alert(data.error.title + ": " + data.error.message);
+                } else {
+                    const existing = directoryList.filter((d: DirectoryRec) => (d.id !== dir.id));
+                    dispatch(
+                        replaceDirectoryList([
+                            ...existing,
+                            data.data
+                        ])
+                    );
+                }
+            });
+    }
+
     return (
         <div className={styles.DirectoryTree}>
             <Tree
@@ -137,12 +190,19 @@ export default function DirectoryTree() {
                         )}
                         {node?.data?.icon_emoji
                             ?
-                            <Emoji emoji={node?.data?.icon_emoji!} size={24} />
+                            <Emoji emoji={node?.data?.icon_emoji!} size={24} native={true} />
                             : <img src="/blue-folder.png" alt="" />
                         }
                         <div className={styles.text}>
                             {node.text}
                         </div>
+                        <div className={styles.spacer}></div>
+                        <img
+                            className={styles.edit}
+                            src="/pencil.png"
+                            alt=""
+                            onClick={_ => handleEditDirectory(fromTree(node as TreeNode))}
+                        />
                     </div>
                 )}
                 tree={directoryList.map(asTree)}
@@ -165,6 +225,19 @@ export default function DirectoryTree() {
             <button className={styles.button} onClick={handleAddToplevelDirectory}>
                 Add Directory
             </button>
+            <Modal
+                title="Edit Directory"
+                visibility={showEdit}
+                body={
+                    <div>
+                        Icon: <IconWidget size={64} initialEmoji={editEmoji} onChange={e => setEditEmoji(e)} />
+                        Title:
+                        <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+                    </div>
+                }
+                onDecline={() => setShowEdit(false)}
+                onAccept={handleSaveDirectoryChanges}
+            />
         </div>
     );
 }

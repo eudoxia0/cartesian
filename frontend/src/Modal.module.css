@@ -1,0 +1,69 @@
+.background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.show {
+    display: block;
+}
+
+.hide {
+    display: none;
+}
+
+.box {
+    border: 1px solid #ccc;
+    background: white;
+}
+
+.title {
+    padding: 15px 40px;
+    font-size: 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+}
+
+.body {
+    border-bottom: 1px solid #ccc;
+    padding: 30px;
+}
+
+.buttons {
+    padding: 30px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.buttons button {
+    background: transparent;
+    border: 1px solid #ccc;
+    padding: 15px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.buttons button img {
+    margin-right: 10px;
+}

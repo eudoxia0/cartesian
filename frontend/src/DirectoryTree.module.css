@@ -28,6 +28,11 @@
 
 .text {
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
+}
+
+.text:hover {
+    cursor: pointer;
 }
 
 .button {
@@ -41,4 +46,17 @@
 
 .arrow {
     width: 15px;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.edit {
+    display: none;
+}
+
+.dir:hover .edit {
+    display: block;
+    cursor: pointer;
 }

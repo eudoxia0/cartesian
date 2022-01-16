@@ -26,7 +26,7 @@ export interface DirectoryRec {
     id: number;
     title: string;
     icon_emoji: string;
-    parent_id: number;
+    parent_id: number | null;
 }
 
 export interface ObjectSummaryRec {

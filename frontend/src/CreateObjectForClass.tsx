@@ -10,6 +10,7 @@ interface Props {
 
 export default function CreateObjectForClass(props: Props) {
     const [title, setTitle] = useState<string>(props.defaultTitle);
+    const [dirId, setDirId] = useState<number | null>(null);
 
     function handleCreate(propValues: { [key: string]: string | number | null; }) {
         if (title.trim().length === 0) {
@@ -26,7 +27,7 @@ export default function CreateObjectForClass(props: Props) {
                 body: JSON.stringify({
                     "title": title.trim(),
                     "class_id": props.cls.id,
-                    "directory_id": null,
+                    "directory_id": dirId,
                     "icon_emoji": "",
                     "values": propValues,
                 })
@@ -42,8 +43,8 @@ export default function CreateObjectForClass(props: Props) {
             });
     }
 
-    function handleDirectoryChange(dirId: number) {
-
+    function handleDirectoryChange(dirId: number | null) {
+        setDirId(dirId);
     }
 
     return (

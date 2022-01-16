@@ -24,7 +24,7 @@ export default function ClassList() {
         event.preventDefault();
         const title = classTitle.trim();
         if (title.length === 0) {
-            window.alert("The title of a class cannot be empty.")
+            window.alert("The title of a class cannot be empty.");
         } else {
             fetch("http://localhost:5000/api/classes",
                 {
@@ -55,6 +55,26 @@ export default function ClassList() {
         }
     }
 
+    function handleDeleteClass(classId: number) {
+        if (window.confirm("Deleting this class will delete all objects with this class. Proceed?")) {
+            fetch(`http://localhost:5000/api/classes/${classId}`,
+                {
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    method: "DELETE",
+                }
+            )
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        window.alert(data.error.title + ": " + data.error.message);
+                    }
+                })
+        }
+    }
+
     if (state.loaded) {
         const { classes } = state;
 
@@ -72,6 +92,9 @@ export default function ClassList() {
                                     <th>
                                         Title
                                     </th>
+                                    <th>
+                                        Delete
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -87,6 +110,11 @@ export default function ClassList() {
                                                 <Link to={`/classes/${cls.id}`}>
                                                     {cls.title}
                                                 </Link>
+                                            </td>
+                                            <td>
+                                                <button onClick={_ => handleDeleteClass(cls.id)}>
+                                                    Delete Class
+                                                </button>
                                             </td>
                                         </tr>
                                     ))

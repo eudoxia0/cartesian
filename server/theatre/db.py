@@ -210,6 +210,20 @@ def create_class(conn: Connection, title: str, icon_emoji: str) -> ClassRec:
     conn.commit()
     return ClassRec(id=cls_id, title=title, icon_emoji=icon_emoji)
 
+def delete_class(conn: Connection, cls_id: int):
+    cur: Cursor = conn.cursor()
+    cur.execute(
+        """
+        delete from
+            classes
+        where
+            id = :cls_id;
+        """,
+        {
+            "cls_id": cls_id,
+        },
+    )
+    conn.commit()
 
 #
 # Class property functions

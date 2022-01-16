@@ -85,7 +85,7 @@ create table objects (
     modified_at integer not null,
 
     -- Cannot delete classes if they have objects.
-    foreign key (class_id) references classes(id) on update cascade on delete restrict,
+    foreign key (class_id) references classes(id) on update cascade on delete cascade,
     foreign key (directory_id) references directories(id) on update cascade on delete set null,
     foreign key (cover_id) references files(id) on update cascade on delete set null,
 

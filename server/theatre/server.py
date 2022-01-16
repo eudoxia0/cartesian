@@ -53,6 +53,8 @@ from werkzeug.utils import secure_filename
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
+from theatre.db import delete_class
+
 bp = Blueprint("api", __name__, url_prefix="")
 
 
@@ -762,6 +764,21 @@ def new_class_property_endpoint(cls_id: int):
             "data": rec.to_json(),
         }
 
+@bp.route("/api/classes/<int:cls_id>", methods=["DELETE"])
+def delete_class_endpoint(cls_id: int):
+    conn: Connection = get_db()
+    rec: Optional[ClassRec] = get_class(conn, cls_id)
+    if rec is not None:
+        delete_class(conn, rec.id)
+        return {
+            "data": None,
+            "error": None,
+        }
+    else:
+        raise CTError(
+            "Class Not Found",
+            f"The class with the ID '{cls_id}' was not found in the database.",
+        )
 
 #
 # Object endpoints

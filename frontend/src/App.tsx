@@ -13,6 +13,7 @@ import { useAppDispatch, replaceDirectoryList } from "./store";
 import ObjectList from "./ObjectList";
 import ObjectView from "./ObjectView";
 import 'emoji-mart/css/emoji-mart.css';
+import Settings from "./Settings";
 
 const monthNames = [
   "January",
@@ -97,9 +98,16 @@ export default function App() {
                 <span>All Objects</span>
               </Link>
             </li>
+            <li>
+              <Link to="/settings">
+                <img src="/equalizer.png" alt="" />
+                <span>Settings</span>
+              </Link>
+            </li>
           </ul>
         </nav>
         <DirectoryTree />
+        <div className={styles.spacer}></div>
       </div>
       <div className={styles.rightPane}>
         <Routes>
@@ -112,6 +120,7 @@ export default function App() {
           <Route path="/create-object" element={<CreateObject defaultTitle="" />} />
           <Route path="/objects/:title" element={<ObjectView />} />
           <Route path="/objects" element={<ObjectList />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
     </div >

@@ -1,0 +1,20 @@
+.settings h2 {
+    margin-bottom: 20px;
+}
+
+.settings textarea {
+    display: block;
+    width: 600px;
+    height: 400px;
+    margin-bottom: 20px;
+}
+
+.settings button {
+    margin-top: 15px;
+    border: 1px solid #ccc;
+    padding: 15px 30px;
+    background: transparent;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}

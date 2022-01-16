@@ -4,6 +4,7 @@ import styles from "./DirectoryTree.module.css";
 import { DirectoryRec } from "./types";
 import { useAppSelector, useAppDispatch, selectDirectoryList, replaceDirectoryList } from "./store";
 import IconWidget from "./IconWidget";
+import { Emoji } from "emoji-mart";
 
 interface TreeNode {
     id: number;
@@ -160,7 +161,11 @@ export default function DirectoryTree() {
                                 {isOpen ? <DownArrow /> : <RightArrow />}
                             </div>
                         )}
-                        <IconWidget size={24} initialEmoji={node?.data?.icon_emoji!} onChange={(emojiId: string) => handleEmojiChange(node as TreeNode, emojiId)} />
+                        {node?.data?.icon_emoji
+                            ?
+                            <Emoji emoji={node?.data?.icon_emoji!} size={24} />
+                            : <img src="/blue-folder.png" alt="" />
+                        }
                         <div className={styles.text}>
                             {node.text}
                         </div>

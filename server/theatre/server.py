@@ -607,7 +607,9 @@ def edit_directory(dir_id: int):
         """
         update directories
         set
-            title = :title, icon_emoji = :icon_emoji, parent_id = :parent_id
+            title = :title,
+            icon_emoji = :icon_emoji,
+            parent_id = :parent_id
         where
             id = :id;
         """,

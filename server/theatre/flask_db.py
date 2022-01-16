@@ -2,6 +2,8 @@
 Flask database utils.
 """
 import sqlite3
+from sqlite3 import Cursor
+
 from flask import g, current_app
 
 
@@ -9,6 +11,9 @@ def get_db():
     if "db" not in g:
         path: str = current_app.config["DB_PATH"]
         g.db = sqlite3.connect(path)
+        cur: Cursor = g.db.cursor()
+        cur.execute("pragma foreign_keys=on;")
+        g.db.commit()
         g.db.row_factory = sqlite3.Row
     return g.db
 

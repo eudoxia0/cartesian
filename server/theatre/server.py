@@ -40,7 +40,7 @@ from theatre.db import (
     create_link,
     get_object_property,
     delete_links_from,
-    edit_property, update_object,
+    edit_property, update_object, class_property_exists, delete_class_property,
 )
 
 from flask import (
@@ -763,6 +763,27 @@ def new_class_property_endpoint(cls_id: int):
             "error": None,
             "data": rec.to_json(),
         }
+
+@bp.route("/api/classes/<int:cls_id>/properties/<int:cls_prop_id>", methods=["DELETE"])
+def delete_class_property_endpoint(cls_id: int, cls_prop_id: int):
+    conn: Connection = get_db()
+    if not class_exists(conn, cls_id):
+        raise CTError(
+            "Class Not Found",
+            f"The class with the ID '{cls_id}' was not found in the database.",
+        )
+    if not class_property_exists(conn, cls_prop_id):
+        raise CTError(
+            "Class Property Not Found",
+            f"The class property with the ID '{cls_prop_id}' was not found in the database.",
+        )
+    else:
+        delete_class_property(conn, cls_prop_id)
+        return {
+            "data": None,
+            "error": None,
+        }
+
 
 @bp.route("/api/classes/<int:cls_id>", methods=["DELETE"])
 def delete_class_endpoint(cls_id: int):

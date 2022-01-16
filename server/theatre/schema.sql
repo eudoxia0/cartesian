@@ -116,7 +116,7 @@ create table properties (
 create table property_changes (
     id integer primary key autoincrement,
     object_id integer not null,
-    prop_id integer not null,
+    prop_id integer,
     -- If the property is deleted, we still want its version history, so we store the title.
     prop_title text not null,
     created_at integer not null,

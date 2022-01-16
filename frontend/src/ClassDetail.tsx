@@ -47,7 +47,7 @@ export default function ClassDetail() {
                             </li>
                             <li>
                                 <b>Class Properties:</b>
-                                <ClassProperties classProps={state.cls.properties} />
+                                <ClassProperties classId={cls.id} classProps={state.cls.properties} />
                             </li>
                         </ol>
                         <ClassNewProperty id={cls.id} addProperty={addProperty} />

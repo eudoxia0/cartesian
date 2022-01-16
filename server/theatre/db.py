@@ -267,6 +267,23 @@ class ClassPropertyRec:
             "type": self.type.value,
         }
 
+def class_property_exists(conn: Connection, cls_prop_id: int) -> bool:
+    cur: Cursor = conn.cursor()
+    rows: List[Tuple] = cur.execute(
+        """
+        select
+            id
+        from
+            class_props
+        where
+            id = :id;
+        """,
+        {
+            "id": cls_prop_id,
+        },
+    ).fetchall()
+    return bool(rows)
+
 
 def get_class_properties(conn: Connection, class_id: int) -> List[ClassPropertyRec]:
     cur: Cursor = conn.cursor()
@@ -330,6 +347,20 @@ def create_class_property(
         description=description,
     )
 
+def delete_class_property(conn: Connection, cls_prop_id: int):
+    cur: Cursor = conn.cursor()
+    cur.execute(
+        """
+        delete from
+            class_props
+        where
+            id = :id
+        """,
+        {
+            "id": cls_prop_id,
+        }
+    )
+    conn.commit()
 
 #
 # Object functions

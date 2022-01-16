@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CreateObjectForProps from "./CreateObjectForProps";
+import DirectorySelect from "./DirectorySelect";
 import { ClassRec } from "./types";
 
 interface Props {
@@ -41,9 +42,14 @@ export default function CreateObjectForClass(props: Props) {
             });
     }
 
+    function handleDirectoryChange(dirId: number) {
+
+    }
+
     return (
         <div>
             Title: <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <DirectorySelect onChange={handleDirectoryChange} />
             <CreateObjectForProps cls={props.cls} onCreate={handleCreate} />
         </div>
     );

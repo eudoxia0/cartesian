@@ -3,7 +3,6 @@ import { Tree } from "@minoru/react-dnd-treeview";
 import styles from "./DirectoryTree.module.css";
 import { DirectoryRec } from "./types";
 import { useAppSelector, useAppDispatch, selectDirectoryList, replaceDirectoryList } from "./store";
-import IconWidget from "./IconWidget";
 import { Emoji } from "emoji-mart";
 
 interface TreeNode {
@@ -121,31 +120,6 @@ export default function DirectoryTree() {
                     window.alert(data.error.title + ": " + data.error.message);
                 } else {
                     dispatch(replaceDirectoryList([...directoryList, data.data]));
-                }
-            });
-    }
-
-    function handleEmojiChange(node: TreeNode, emojiId: string) {
-        fetch(`http://localhost:5000/api/directories/${node.id}`,
-            {
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    "title": node.text,
-                    "parent_id": node.parent,
-                    "icon_emoji": emojiId,
-                })
-            }
-        )
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    window.alert(data.error.title + ": " + data.error.message);
-                } else {
-                    dispatch(replaceDirectoryList([...directoryList.filter((dir: DirectoryRec) => dir.id !== node.id), data.data]));
                 }
             });
     }

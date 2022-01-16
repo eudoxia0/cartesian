@@ -1,0 +1,21 @@
+.show {
+    display: show;
+}
+
+.hide {
+    display: none;
+}
+
+.placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.placeholder:hover {
+    border: 2px solid #ccc;
+}
+
+.picker {
+    position: fixed;
+}

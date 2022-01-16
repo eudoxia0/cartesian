@@ -1,0 +1,43 @@
+.DirectoryTree {
+    width: 100%;
+    border-top: 1px solid #ccc;
+    padding: 30px;
+}
+
+.DirectoryTree li {
+    list-style-type: none;
+}
+
+.dir {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+}
+
+.icon {
+    padding-right: 5px;
+}
+
+.icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.text {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.button {
+    margin-top: 15px;
+    border: none;
+    background: white;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+}
+
+.arrow {
+    width: 15px;
+}

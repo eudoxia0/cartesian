@@ -50,7 +50,7 @@ export default function CreateObjectForClass(props: Props) {
     return (
         <div>
             Title: <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <DirectorySelect onChange={handleDirectoryChange} />
+            <DirectorySelect initialValue={null} onChange={handleDirectoryChange} />
             <CreateObjectForProps cls={props.cls} onCreate={handleCreate} />
         </div>
     );

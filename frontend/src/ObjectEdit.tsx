@@ -5,6 +5,7 @@ import { ObjectDetailRec, PropValueRec } from "./types";
 import IconWidget from "./IconWidget";
 import styles from "./ObjectEdit.module.css";
 import { humanizeDate } from "./utils";
+import DirectorySelect from "./DirectorySelect";
 
 interface Props {
     obj: ObjectDetailRec;
@@ -15,6 +16,7 @@ type PropValues = { [key: string]: string | number | null; };
 export default function ObjectEdit(props: Props) {
     const [title, setTitle] = useState<string>(props.obj.title);
     const [emoji, setEmoji] = useState<string>(props.obj.icon_emoji);
+    const [dirId, setDirId] = useState<number | null>(props.obj.directory_id);
     const [propValues, setPropValues] = useState<PropValues>({});
 
     useEffect(() => {
@@ -73,7 +75,7 @@ export default function ObjectEdit(props: Props) {
                 method: "POST",
                 body: JSON.stringify({
                     "title": title.trim(),
-                    "directory_id": null,
+                    "directory_id": dirId,
                     "icon_emoji": emoji,
                     "values": propValues,
                 })
@@ -89,12 +91,19 @@ export default function ObjectEdit(props: Props) {
             });
     }
 
+    function handleDirectoryChange(dirId: number | null) {
+        setDirId(dirId);
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.box}>
                 <div className={styles.titleContainer}>
                     <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
                     <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+                </div>
+                <div className={styles.directoryContainer}>
+                    In directory: <DirectorySelect initialValue={dirId} onChange={handleDirectoryChange} />
                 </div>
                 <div>
                     <table className={styles.properties}>

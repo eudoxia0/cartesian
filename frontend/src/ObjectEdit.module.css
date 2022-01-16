@@ -9,6 +9,10 @@
     border: 1px solid #555;
 }
 
+.directoryContainer {
+    padding: 15px;
+}
+
 .titleContainer {
     display: flex;
     flex-direction: row;

@@ -53,7 +53,6 @@ class WebLinkFragment:
     """
 
     url: str
-    contents: str
 
 
 #

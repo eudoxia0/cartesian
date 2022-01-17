@@ -4,7 +4,7 @@ import "katex/dist/katex.min.css";
 
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, Node } from "prosemirror-model";
+import { Schema, Node, Slice, Fragment } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 import { exampleSetup } from "./editor";
@@ -111,6 +111,32 @@ baseNodes = Object.assign({}, baseNodes, tableNodes({}));
 let schemaA = new Schema({
     nodes: baseNodes,
     marks: {
+        // :: MarkSpec A link. Has `href` and `title` attributes. `title`
+        // defaults to the empty string. Rendered and parsed as an `<a>`
+        // element.
+        link: {
+            attrs: {
+                href: {},
+            },
+            inclusive: false,
+            parseDOM: [{
+                tag: "a[href]", getAttrs(dom) {
+                    return { href: dom.getAttribute("href") };
+                }
+            }],
+            toDOM(node) {
+                let { href } = node.attrs;
+                return [
+                    "a",
+                    {
+                        href: href,
+                        "onClick": `window.open("${href}", '_blank');`,
+                    },
+                    0
+                ];
+            }
+        },
+
         wikilinkmark: {
             attrs: { title: {} },
             toDOM(node) {
@@ -176,7 +202,7 @@ export function createEditor(selector, onChange) {
             let newState = view.state.apply(tr);
             view.updateState(newState);
             onChange(newState.doc.toJSON());
-        }
+        },
     });
 
     return view;

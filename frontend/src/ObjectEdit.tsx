@@ -35,7 +35,6 @@ export default function ObjectEdit(props: Props) {
         const newValues = Object.assign({}, propValues);
         newValues[name] = JSON.stringify(doc);
         setPropValues(newValues);
-        console.log(newValues);
     }
 
     function handleFileUpload(name: string, fileId: number) {

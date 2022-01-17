@@ -75,14 +75,20 @@ def parse_fragment(json: dict):
     return parsers[json["type"]](json)
 
 
-def parse_text(json: dict) -> TextFragment:
+def parse_text(json: dict) -> Union[TextFragment, WebLinkFragment]:
     marks: List[dict] = json.get("marks", [])
-    is_em: bool = bool([mark for mark in marks if mark.get("type", "") == "em"])
-    is_bold: bool = bool([mark for mark in marks if mark.get("type", "") == "strong"])
-    is_code: bool = bool([mark for mark in marks if mark.get("type", "") == "code"])
-    return TextFragment(
-        contents=json["text"], emphasized=is_em, bold=is_bold, code=is_code
-    )
+    is_link: bool = bool([mark for mark in marks if mark.get("type", "") == "link"])
+    if is_link:
+        link_mark: dict = [mark for mark in marks if mark.get("type", "") == "link"][0]
+        url: str = link_mark["attrs"]["href"]
+        return WebLinkFragment(url=url)
+    else:
+        is_em: bool = bool([mark for mark in marks if mark.get("type", "") == "em"])
+        is_bold: bool = bool([mark for mark in marks if mark.get("type", "") == "strong"])
+        is_code: bool = bool([mark for mark in marks if mark.get("type", "") == "code"])
+        return TextFragment(
+            contents=json["text"], emphasized=is_em, bold=is_bold, code=is_code
+        )
 
 
 def parse_wiki_link(json: dict) -> InternalLinkFragment:
@@ -166,5 +172,16 @@ def emit_frag(frag: InlineFragment) -> dict:
         }
     elif isinstance(frag, InternalLinkFragment):
         return {"type": "wikilinknode", "attrs": {"title": frag.title}}
+    elif isinstance(frag, WebLinkFragment):
+        return {
+            "type": "text",
+            "text": frag.url,
+            "marks": [
+                {
+                    "type": "link",
+                    "attrs": {"href": frag.url}
+                }
+            ]
+        }
     else:
         raise CTError("Unknown Inline Fragment", "Unknown inline fragment type.")

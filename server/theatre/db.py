@@ -136,7 +136,7 @@ class ClassRec:
         }
 
 
-def class_exists(conn: Connection, id: int) -> bool:
+def class_exists(conn: Connection, cls_id: int) -> bool:
     cur: Cursor = conn.cursor()
     rows: List[Tuple] = cur.execute(
         """
@@ -148,7 +148,7 @@ def class_exists(conn: Connection, id: int) -> bool:
             id = :id;
         """,
         {
-            "id": id,
+            "id": cls_id,
         },
     ).fetchall()
     return bool(rows)

@@ -40,8 +40,13 @@ from theatre.db import (
     create_link,
     get_object_property,
     delete_links_from,
-    edit_property, update_object, class_property_exists, delete_class_property, list_objects_in_directory,
+    edit_property,
+    update_object,
+    class_property_exists,
+    delete_class_property,
+    list_objects_in_directory,
     list_uncategorized_objects,
+    update_class,
 )
 
 from flask import (
@@ -661,12 +666,17 @@ def delete_directory(dir_id: int):
             f"The directory with the ID '{dir_id}' was not found in the database.",
         )
 
+
 @bp.route("/api/directories/<int:dir_id>/objects", methods=["GET"])
 def list_objects_in_directory_endpoint(dir_id: int):
     return {
-        "data": [obj.to_json() for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)],
+        "data": [
+            obj.to_json()
+            for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)
+        ],
         "error": None,
     }
+
 
 @bp.route("/api/uncategorized-objects", methods=["GET"])
 def list_uncategorized_objects_endpoint():
@@ -674,6 +684,7 @@ def list_uncategorized_objects_endpoint():
         "data": [obj.to_json() for obj in list_uncategorized_objects(conn=get_db())],
         "error": None,
     }
+
 
 #
 # Class endpoints
@@ -767,6 +778,7 @@ def new_class_property_endpoint(cls_id: int):
             "data": rec.to_json(),
         }
 
+
 @bp.route("/api/classes/<int:cls_id>/properties/<int:cls_prop_id>", methods=["DELETE"])
 def delete_class_property_endpoint(cls_id: int, cls_prop_id: int):
     conn: Connection = get_db()
@@ -803,6 +815,30 @@ def delete_class_endpoint(cls_id: int):
             "Class Not Found",
             f"The class with the ID '{cls_id}' was not found in the database.",
         )
+
+
+@bp.route("/api/classes/<int:cls_id>", methods=["POST"])
+def update_class_endpoint(cls_id: int):
+    conn: Connection = get_db()
+    if class_exists(conn, cls_id):
+        form: dict = request.json
+        title: str = form["title"].strip()
+        icon_emoji: str = form["icon_emoji"].strip()
+        rec: ClassRec = update_class(
+            conn=conn, cls_id=cls_id, new_title=title, new_icon_emoji=icon_emoji
+        )
+        obj = rec.to_json()
+        obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
+        return {
+            "data": obj,
+            "error": None,
+        }
+    else:
+        raise CTError(
+            "Class Not Found",
+            f"The class with the ID '{cls_id}' was not found in the database.",
+        )
+
 
 #
 # Object endpoints
@@ -1019,7 +1055,7 @@ def edit_object_endpoint(title: str):
         new_title=new_title,
         new_directory_id=new_directory_id,
         new_icon_emoji=new_icon_emoji,
-        modified_at=modified_at
+        modified_at=modified_at,
     )
 
     # Change the provided values

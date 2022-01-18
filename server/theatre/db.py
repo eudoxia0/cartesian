@@ -166,7 +166,10 @@ def list_classes(conn: Connection) -> List[ClassRec]:
             id asc;
         """
     ).fetchall()
-    return [ClassRec(id=row["id"], title=row["title"], icon_emoji=row["icon_emoji"]) for row in rows]
+    return [
+        ClassRec(id=row["id"], title=row["title"], icon_emoji=row["icon_emoji"])
+        for row in rows
+    ]
 
 
 def get_class(conn: Connection, id: int) -> Optional[ClassRec]:
@@ -210,6 +213,31 @@ def create_class(conn: Connection, title: str, icon_emoji: str) -> ClassRec:
     conn.commit()
     return ClassRec(id=cls_id, title=title, icon_emoji=icon_emoji)
 
+
+def update_class(
+    conn: Connection, cls_id: int, new_title: str, new_icon_emoji: str
+) -> ClassRec:
+    cur: Cursor = conn.cursor()
+    cur.execute(
+        """
+        update
+            classes
+        set
+            title = :title,
+            icon_emoji = :icon_emoji
+        where
+            id = :id;
+        """,
+        {
+            "id": cls_id,
+            "title": new_title,
+            "icon_emoji": new_icon_emoji,
+        },
+    )
+    conn.commit()
+    return ClassRec(id=cls_id, title=new_title, icon_emoji=new_icon_emoji)
+
+
 def delete_class(conn: Connection, cls_id: int):
     cur: Cursor = conn.cursor()
     cur.execute(
@@ -224,6 +252,7 @@ def delete_class(conn: Connection, cls_id: int):
         },
     )
     conn.commit()
+
 
 #
 # Class property functions
@@ -266,6 +295,7 @@ class ClassPropertyRec:
             "description": self.description,
             "type": self.type.value,
         }
+
 
 def class_property_exists(conn: Connection, cls_prop_id: int) -> bool:
     cur: Cursor = conn.cursor()
@@ -347,6 +377,7 @@ def create_class_property(
         description=description,
     )
 
+
 def delete_class_property(conn: Connection, cls_prop_id: int):
     cur: Cursor = conn.cursor()
     cur.execute(
@@ -358,9 +389,10 @@ def delete_class_property(conn: Connection, cls_prop_id: int):
         """,
         {
             "id": cls_prop_id,
-        }
+        },
     )
     conn.commit()
+
 
 #
 # Object functions
@@ -430,7 +462,7 @@ def list_objects_in_directory(conn: Connection, dir_id: int) -> List[ObjectRec]:
         """,
         {
             "directory_id": dir_id,
-        }
+        },
     ).fetchall()
     return [
         ObjectRec(
@@ -444,6 +476,7 @@ def list_objects_in_directory(conn: Connection, dir_id: int) -> List[ObjectRec]:
         )
         for row in rows
     ]
+
 
 def list_uncategorized_objects(conn: Connection) -> List[ObjectRec]:
     cur: Cursor = conn.cursor()
@@ -471,6 +504,7 @@ def list_uncategorized_objects(conn: Connection) -> List[ObjectRec]:
         )
         for row in rows
     ]
+
 
 def get_object_by_title(conn: Connection, title: str) -> Optional[ObjectRec]:
     cur: Cursor = conn.cursor()

@@ -887,15 +887,18 @@ def new_object_endpoint():
                 "Property Not Provided",
                 f"No value provided for the property '{expected_key}'.",
             )
+    # Effective emoji
+    effective_icon_emoji: str = icon_emoji
+    if (icon_emoji == "") and (cls.icon_emoji != ""):
+        effective_icon_emoji = cls.icon_emoji
     # Create the object
     created_at: int = now_millis()
-    print(created_at)
     object_id: int = create_object(
         conn=conn,
         title=title,
         class_id=class_id,
         directory_id=directory_id,
-        icon_emoji=icon_emoji,
+        icon_emoji=effective_icon_emoji,
         created_at=created_at,
         modified_at=created_at,
     )
@@ -980,7 +983,7 @@ def new_object_endpoint():
         title=title,
         class_id=class_id,
         directory_id=directory_id,
-        icon_emoji=icon_emoji,
+        icon_emoji=effective_icon_emoji,
         created_at=created_at,
         modified_at=created_at,
     )

@@ -178,6 +178,38 @@ export default function DirectoryTree() {
             });
     }
 
+    function handleDeleteDirectory(dirId: number) {
+        setShowEdit(false);
+        const dir = editDir!;
+        const newTitle = editTitle;
+        const newEmoji = editEmoji;
+        setEditDir(null);
+        setEditTitle("");
+        setEditEmoji("");
+        fetch(`http://localhost:5000/api/directories/${dir.id}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                method: "DELETE",
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    window.alert(data.error.title + ": " + data.error.message);
+                } else {
+                    const existing = directoryList.filter((d: DirectoryRec) => (d.id !== dir.id));
+                    dispatch(
+                        replaceDirectoryList([
+                            ...existing,
+                        ])
+                    );
+                }
+            });
+    }
+
     return (
         <div className={styles.DirectoryTree}>
             <Tree
@@ -225,17 +257,28 @@ export default function DirectoryTree() {
                     <CustomPlaceholder node={node} depth={depth} />
                 )}
             />
+            <div className={styles.dir} style={{ marginLeft: 20, marginTop: 20 }}>
+                <img src="/blue-folder.png" alt="" />
+                <div className={styles.text}>
+                    <Link to={`/uncategorized`}>
+                        Uncategorized
+                    </Link>
+                </div>
+            </div>
             <button className={styles.button} onClick={handleAddToplevelDirectory}>
                 Add Directory
             </button>
             <Modal
                 title="Edit Directory"
                 visibility={showEdit}
-                body={
+                body={editDir &&
                     <div>
                         Icon: <IconWidget size={64} initialEmoji={editEmoji} onChange={e => setEditEmoji(e)} />
                         Title:
                         <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+                        <button onClick={_ => handleDeleteDirectory(editDir.id)}>
+                            Delete
+                        </button>
                     </div>
                 }
                 onDecline={() => setShowEdit(false)}

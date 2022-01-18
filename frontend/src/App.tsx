@@ -15,6 +15,7 @@ import ObjectView from "./ObjectView";
 import 'emoji-mart/css/emoji-mart.css';
 import Settings from "./Settings";
 import DirectoryContents from "./DirectoryContents";
+import UncategorizedObjects from "./UncategorizedObjects";
 
 const monthNames = [
   "January",
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="/objects" element={<ObjectList />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/directories/:dirId" element={<DirectoryContents />} />
+          <Route path="/uncategorized" element={<UncategorizedObjects />} />
         </Routes>
       </div>
     </div >

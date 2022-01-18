@@ -1,11 +1,12 @@
 import { MouseEvent, useEffect, useState } from "react";
 import Editor from "./Editor";
 import FilePropWidget from "./FilePropWidget";
-import { ObjectDetailRec, PropValueRec } from "./types";
+import { LinkRec, ObjectDetailRec, PropValueRec } from "./types";
 import IconWidget from "./IconWidget";
 import styles from "./ObjectEdit.module.css";
 import { humanizeDate } from "./utils";
 import DirectorySelect from "./DirectorySelect";
+import { Link } from "react-router-dom";
 
 interface Props {
     obj: ObjectDetailRec;
@@ -145,6 +146,22 @@ export default function ObjectEdit(props: Props) {
                     </table>
                 </div>
             </div>
+            <div>
+                Linked By:
+                <ul>
+                    {
+                        props.obj.links.map((link: LinkRec) => {
+                            return (
+                                <li key={link.title}>
+                                    <Link to={`/objects/${link.title}`}>
+                                        {link.title}
+                                    </Link>
+                                </li>
+                            );
+                        })
+                    }
+                </ul>
+            </div>2
             <button className={styles.button} onClick={handleSave}>Save</button>
         </div >
     )

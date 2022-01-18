@@ -133,9 +133,11 @@ create table property_changes (
 
 create table links (
     id integer primary key autoincrement,
+    from_object_id integer not null,
     from_property_id integer not null,
     to_object_id integer not null,
 
+    foreign key (from_object_id) references objects(id) on update cascade on delete cascade,
     foreign key (from_property_id) references properties(id) on update cascade on delete cascade,
     foreign key (to_object_id) references objects(id) on update cascade on delete cascade,
     constraint no_self_links check (from_property_id <> to_object_id),

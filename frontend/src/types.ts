@@ -49,6 +49,10 @@ export interface PropValueRec {
     value_file: number | null;
 }
 
+export interface LinkRec {
+    title: string;
+}
+
 export interface ObjectDetailRec {
     id: number;
     title: string;
@@ -58,4 +62,5 @@ export interface ObjectDetailRec {
     created_at: number;
     modified_at: number;
     properties: Array<PropValueRec>;
+    links: Array<LinkRec>;
 }

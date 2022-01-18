@@ -47,6 +47,7 @@ from theatre.db import (
     list_objects_in_directory,
     list_uncategorized_objects,
     update_class,
+    get_links_to_object,
 )
 
 from flask import (
@@ -975,7 +976,10 @@ def new_object_endpoint():
             links_to: Optional[ObjectRec] = get_object_by_title(conn, link_title)
             if links_to is not None:
                 create_link(
-                    conn=conn, from_property_id=prop_id, to_object_id=links_to.id
+                    conn=conn,
+                    from_object_id=object_id,
+                    from_property_id=prop_id,
+                    to_object_id=links_to.id,
                 )
     # Return
     obj: ObjectRec = ObjectRec(
@@ -1009,6 +1013,9 @@ def object_details(title: str):
         obj_dict: dict = obj.to_json()
         props: List[PropertyRec] = list_object_properties(conn=conn, object_id=obj.id)
         obj_dict["properties"] = [prop.to_json() for prop in props]
+        obj_dict["links"] = [
+            link.to_json() for link in get_links_to_object(conn, obj.id)
+        ]
         return {
             "error": None,
             "data": obj_dict,
@@ -1143,6 +1150,7 @@ def edit_object_endpoint(title: str):
             if links_to is not None:
                 create_link(
                     conn=conn,
+                    from_object_id=obj.id,
                     from_property_id=existing_prop.id,
                     to_object_id=links_to.id,
                 )

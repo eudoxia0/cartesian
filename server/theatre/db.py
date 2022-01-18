@@ -820,40 +820,17 @@ def create_property_change(
 @dataclass(frozen=True)
 class LinkRec:
     id: int
+    from_object_id: int
     from_property_id: int
     to_object_id: int
 
     def to_json(self) -> dict:
         return {
             "id": self.id,
+            "from_object_id": self.from_object_id,
             "from_property_id": self.from_property_id,
             "to_object_id": self.to_object_id,
         }
-
-
-def get_links_from(conn: Connection, from_property_id: int) -> List[LinkRec]:
-    cur: Cursor = conn.cursor()
-    rows: List[Tuple] = cur.execute(
-        """
-        select
-            id, to_object_id
-        from
-            links
-        where
-            from_property_id = :from_property_id;
-        """,
-        {
-            "from_property_id": from_property_id,
-        },
-    ).fetchall()
-    return [
-        LinkRec(
-            id=row["id"],
-            from_property_id=from_property_id,
-            to_object_id=row["to_object_id"],
-        )
-        for row in rows
-    ]
 
 
 def get_links_to(conn: Connection, to_object_id: int) -> List[LinkRec]:
@@ -861,7 +838,7 @@ def get_links_to(conn: Connection, to_object_id: int) -> List[LinkRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, from_property_id
+            id, from_object_id, from_property_id
         from
             links
         where
@@ -874,6 +851,7 @@ def get_links_to(conn: Connection, to_object_id: int) -> List[LinkRec]:
     return [
         LinkRec(
             id=row["id"],
+            from_object_id=row["from_object_id"],
             from_property_id=row["from_property_id"],
             to_object_id=to_object_id,
         )
@@ -883,6 +861,7 @@ def get_links_to(conn: Connection, to_object_id: int) -> List[LinkRec]:
 
 def create_link(
     conn: Connection,
+    from_object_id: int,
     from_property_id: int,
     to_object_id: int,
 ) -> id:
@@ -890,12 +869,13 @@ def create_link(
     cur.execute(
         """
         insert into links
-            (from_property_id, to_object_id)
+            (from_object_id, from_property_id, to_object_id)
         values
-            (:from_property_id, :to_object_id)
+            (:from_object_id, :from_property_id, :to_object_id)
         returning id;
         """,
         {
+            "from_object_id": from_object_id,
             "from_property_id": from_property_id,
             "to_object_id": to_object_id,
         },
@@ -919,6 +899,43 @@ def delete_links_from(conn: Connection, property_id: int):
         },
     )
     conn.commit()
+
+
+@dataclass(frozen=True)
+class LinkRepr:
+    title: str
+
+    def to_json(self) -> dict:
+        return {
+            "title": self.title,
+        }
+
+
+def get_links_to_object(conn: Connection, obj_id: int) -> List[LinkRepr]:
+    cur: Cursor = conn.cursor()
+    rows: List[Tuple] = cur.execute(
+        """
+        select distinct
+            objects.title
+        from
+            links as links
+        join
+            objects as objects
+        on
+            objects.id = links.from_object_id
+        where
+            to_object_id = :to_object_id;
+        """,
+        {
+            "to_object_id": obj_id,
+        },
+    ).fetchall()
+    return [
+        LinkRepr(
+            title=row["title"],
+        )
+        for row in rows
+    ]
 
 
 def edit_property(

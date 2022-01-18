@@ -1,5 +1,6 @@
 import { useEffect, useState, MouseEvent } from "react";
 import { Link } from "react-router-dom";
+import IconWidget from "./IconWidget";
 import SimpleContainer from "./SimpleContainer";
 import { ClassRec } from "./types";
 
@@ -75,6 +76,36 @@ export default function ClassList() {
         }
     }
 
+    function handleEmojiChange(cls: ClassRec, emojiId: string) {
+        fetch(`http://localhost:5000/api/classes/${cls.id}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    "title": cls.title,
+                    "icon_emoji": emojiId,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    window.alert(data.error.title + ": " + data.error.message);
+                }
+                const existing = state.classes.filter(c => (c.id !== cls.id));
+                setState({
+                    loaded: state.loaded,
+                    classes: [
+                        ...existing,
+                        data.data
+                    ],
+                });
+            })
+    }
+
     if (state.loaded) {
         const { classes } = state;
 
@@ -88,6 +119,9 @@ export default function ClassList() {
                                 <tr>
                                     <th>
                                         ID
+                                    </th>
+                                    <th>
+                                        Icon
                                     </th>
                                     <th>
                                         Title
@@ -105,6 +139,13 @@ export default function ClassList() {
                                                 <Link to={`/classes/${cls.id}`}>
                                                     {cls.id}
                                                 </Link>
+                                            </td>
+                                            <td>
+                                                <IconWidget
+                                                    size={44}
+                                                    initialEmoji={cls.icon_emoji}
+                                                    onChange={e => handleEmojiChange(cls, e)}
+                                                />
                                             </td>
                                             <td>
                                                 <Link to={`/classes/${cls.id}`}>

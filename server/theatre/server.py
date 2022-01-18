@@ -41,6 +41,7 @@ from theatre.db import (
     get_object_property,
     delete_links_from,
     edit_property, update_object, class_property_exists, delete_class_property, list_objects_in_directory,
+    list_uncategorized_objects,
 )
 
 from flask import (
@@ -637,20 +638,7 @@ def edit_directory(dir_id: int):
 def delete_directory(dir_id: int):
     db = get_db()
     cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            id
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": dir_id,
-        },
-    ).fetchall()
-    if results:
+    if directory_exists(db, dir_id):
         cur.execute(
             """
             delete from
@@ -676,8 +664,15 @@ def delete_directory(dir_id: int):
 @bp.route("/api/directories/<int:dir_id>/objects", methods=["GET"])
 def list_objects_in_directory_endpoint(dir_id: int):
     return {
-        "error": None,
         "data": [obj.to_json() for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)],
+        "error": None,
+    }
+
+@bp.route("/api/uncategorized-objects", methods=["GET"])
+def list_uncategorized_objects_endpoint():
+    return {
+        "data": [obj.to_json() for obj in list_uncategorized_objects(conn=get_db())],
+        "error": None,
     }
 
 #

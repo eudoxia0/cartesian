@@ -32,8 +32,8 @@ create table directories (
     parent_id integer,
     created_at integer not null,
 
-    foreign key (cover_id) references files(id),
-    foreign key (parent_id) references directories(id),
+    foreign key (cover_id) references files(id) on update cascade on delete set null,
+    foreign key (parent_id) references directories(id) on update cascade on delete set null,
 
     constraint unique_title unique (title),
     constraint non_empty_title check (title <> ''),

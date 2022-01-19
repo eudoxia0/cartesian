@@ -6,7 +6,7 @@ import IconWidget from "./IconWidget";
 import styles from "./ObjectEdit.module.css";
 import { humanizeDate } from "./utils";
 import DirectorySelect from "./DirectorySelect";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Props {
     obj: ObjectDetailRec;
@@ -15,6 +15,7 @@ interface Props {
 type PropValues = { [key: string]: string | number | null; };
 
 export default function ObjectEdit(props: Props) {
+    let navigate = useNavigate();
     const [title, setTitle] = useState<string>(props.obj.title);
     const [emoji, setEmoji] = useState<string>(props.obj.icon_emoji);
     const [dirId, setDirId] = useState<number | null>(props.obj.directory_id);
@@ -95,6 +96,28 @@ export default function ObjectEdit(props: Props) {
         setDirId(dirId);
     }
 
+    function handleDelete(event: MouseEvent<HTMLImageElement>) {
+        if (window.confirm("Are you sure you want to delete this object?")) {
+            fetch(`http://localhost:5000/api/objects/${props.obj.title}`,
+                {
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    method: "DELETE",
+                }
+            )
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        window.alert(data.error.title + ": " + data.error.message);
+                    } else {
+                        navigate("/");
+                    }
+                });
+        }
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.box}>
@@ -102,8 +125,14 @@ export default function ObjectEdit(props: Props) {
                     <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
                     <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
                 </div>
-                <div className={styles.directoryContainer}>
-                    In directory: <DirectorySelect initialValue={dirId} onChange={handleDirectoryChange} />
+                <div className={styles.menuBar}>
+                    <div className={styles.directoryContainer}>
+                        In directory: <DirectorySelect initialValue={dirId} onChange={handleDirectoryChange} />
+                    </div>
+                    <div className={styles.spacer}></div>
+                    <div className={styles.menuRest}>
+                        <img src="/bin-metal.png" alt="" onClick={handleDelete} />
+                    </div>
                 </div>
                 <div>
                     <table className={styles.properties}>
@@ -161,8 +190,8 @@ export default function ObjectEdit(props: Props) {
                         })
                     }
                 </ul>
-            </div>2
+            </div>
             <button className={styles.button} onClick={handleSave}>Save</button>
-        </div >
+        </div>
     )
 }

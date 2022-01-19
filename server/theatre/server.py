@@ -47,7 +47,7 @@ from theatre.db import (
     list_objects_in_directory,
     list_uncategorized_objects,
     update_class,
-    get_links_to_object,
+    get_links_to_object, delete_object,
 )
 
 from flask import (
@@ -1162,6 +1162,22 @@ def edit_object_endpoint(title: str):
         "error": None,
     }
 
+@bp.route("/api/objects/<path:title>", methods=["DELETE"])
+def delete_object_endpoint(title: str):
+    # Retrieve the object
+    conn: Connection = get_db()
+    obj: Optional[ObjectRec] = get_object_by_title(conn, title)
+    if obj is None:
+        raise CTError(
+            "Object Not Found",
+            f"The object with the title '{title}' was not found in the database.",
+        )
+    else:
+        delete_object(conn, obj.id)
+        return {
+            "data": None,
+            "error": None,
+        }
 
 #
 # Error handling

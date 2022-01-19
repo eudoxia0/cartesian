@@ -567,6 +567,20 @@ def create_object(
     conn.commit()
     return obj_id
 
+def delete_object(conn: Connection, obj_id: int):
+    cur: Cursor = conn.cursor()
+    cur.execute(
+        """
+        delete from
+            objects
+        where
+            id = :obj_id
+        """,
+        {
+            "obj_id": obj_id,
+        },
+    )
+    conn.commit()
 
 #
 # Object property functions

@@ -9,9 +9,31 @@
     border: 1px solid #555;
 }
 
+.menuBar {
+    border-bottom: 1px solid #555;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.spacer {
+    flex: 1;
+}
+
 .directoryContainer {
     padding: 15px;
-    border-bottom: 1px solid #555;
+    border-right: 1px solid #555;
+}
+
+.menuRest {
+    padding: 15px;
+    border-left: 1px solid #555;
+    height: 100%;
+}
+
+.menuRest img {
+    cursor: pointer;
 }
 
 .titleContainer {

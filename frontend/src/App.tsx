@@ -16,6 +16,7 @@ import 'emoji-mart/css/emoji-mart.css';
 import Settings from "./Settings";
 import DirectoryContents from "./DirectoryContents";
 import UncategorizedObjects from "./UncategorizedObjects";
+import SearchPage from "./SearchPage";
 
 const monthNames = [
   "January",
@@ -101,6 +102,12 @@ export default function App() {
               </Link>
             </li>
             <li>
+              <Link to="/search">
+                <img src="/magnifier-left.png" alt="" />
+                <span>Search</span>
+              </Link>
+            </li>
+            <li>
               <Link to="/settings">
                 <img src="/equalizer.png" alt="" />
                 <span>Settings</span>
@@ -125,6 +132,7 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/directories/:dirId" element={<DirectoryContents />} />
           <Route path="/uncategorized" element={<UncategorizedObjects />} />
+          <Route path="/search" element={<SearchPage />} />
         </Routes>
       </div>
     </div >

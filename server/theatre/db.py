@@ -1,5 +1,5 @@
 import json
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Iterable
 from sqlite3 import Connection, Cursor
 from dataclasses import dataclass
 from enum import Enum
@@ -567,6 +567,7 @@ def create_object(
     conn.commit()
     return obj_id
 
+
 def delete_object(conn: Connection, obj_id: int):
     cur: Cursor = conn.cursor()
     cur.execute(
@@ -581,6 +582,7 @@ def delete_object(conn: Connection, obj_id: int):
         },
     )
     conn.commit()
+
 
 #
 # Object property functions
@@ -1037,3 +1039,93 @@ def update_object(
                     value_text=new_value_text,
                     value_file=prop.value_file,
                 )
+
+
+#
+# Search functions
+#
+
+
+def search_objects(conn: Connection, query: str) -> Iterable[ObjectRec]:
+    a: List[ObjectRec] = search_objects_by_title(conn, query)
+    b: List[ObjectRec] = search_objects_by_property_text(conn, query)
+    d: Dict[int, ObjectRec] = {obj.id: obj for obj in a}
+    for obj in b:
+        if obj.id not in d:
+            d[obj.id] = obj
+    return d.values()
+
+
+def search_objects_by_title(conn: Connection, title: str) -> List[ObjectRec]:
+    cur: Cursor = conn.cursor()
+    rows: List[Tuple] = cur.execute(
+        """
+        select
+            id, title, class_id, directory_id, icon_emoji, created_at, modified_at
+        from
+            objects
+        where
+            title like :title;
+        """,
+        {
+            "title": f"%{title}%",
+        },
+    ).fetchall()
+    return [
+        ObjectRec(
+            id=row["id"],
+            title=row["title"],
+            class_id=row["class_id"],
+            directory_id=row["directory_id"],
+            icon_emoji=row["icon_emoji"],
+            created_at=row["created_at"],
+            modified_at=row["modified_at"],
+        )
+        for row in rows
+    ]
+
+
+def search_objects_by_property_text(conn: Connection, query: str) -> List[ObjectRec]:
+    cur: Cursor = conn.cursor()
+    rows: List[Tuple] = cur.execute(
+        """
+        select
+            objects.id as id,
+            objects.title as title,
+            objects.class_id as class_id,
+            objects.directory_id as directory_id,
+            objects.icon_emoji as icon_emoji,
+            objects.created_at as created_at,
+            objects.modified_at as modified_at
+        from
+            properties as properties
+        join
+            objects as objects
+        on
+            properties.object_id = objects.id
+        where
+            properties.id in (
+                select
+                    id
+                from
+                    properties_fts
+                where
+                    properties_fts match :query
+            );
+        """,
+        {
+            "query": query,
+        },
+    ).fetchall()
+    return [
+        ObjectRec(
+            id=row["id"],
+            title=row["title"],
+            class_id=row["class_id"],
+            directory_id=row["directory_id"],
+            icon_emoji=row["icon_emoji"],
+            created_at=row["created_at"],
+            modified_at=row["modified_at"],
+        )
+        for row in rows
+    ]

@@ -47,7 +47,9 @@ from theatre.db import (
     list_objects_in_directory,
     list_uncategorized_objects,
     update_class,
-    get_links_to_object, delete_object,
+    get_links_to_object,
+    delete_object,
+    search_objects,
 )
 
 from flask import (
@@ -1162,6 +1164,7 @@ def edit_object_endpoint(title: str):
         "error": None,
     }
 
+
 @bp.route("/api/objects/<path:title>", methods=["DELETE"])
 def delete_object_endpoint(title: str):
     # Retrieve the object
@@ -1178,6 +1181,19 @@ def delete_object_endpoint(title: str):
             "data": None,
             "error": None,
         }
+
+
+@bp.route("/api/object-search", methods=["POST"])
+def object_search_endpoint():
+    # Parse the input
+    form: dict = request.json
+    query: str = form["query"].strip()
+    # Return results
+    return {
+        "data": [obj.to_json() for obj in search_objects(conn=get_db(), query=query)],
+        "error": None,
+    }
+
 
 #
 # Error handling

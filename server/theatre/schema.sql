@@ -113,6 +113,44 @@ create table properties (
     foreign key (value_file) references files(id) on update cascade on delete set null
 );
 
+create virtual table properties_fts using fts5 (
+    id,
+    value_text,
+    content=properties,
+    content_rowid=id
+);
+
+create trigger properties_fts_insert
+after insert on properties
+begin
+    insert into properties_fts
+        (id, value_text)
+    values
+        (new.id, new.value_text);
+end;
+
+create trigger properties_fts_delete
+after delete on properties
+begin
+    insert into properties_fts
+        (properties_fts, id, value_text)
+    values
+        ('delete', old.id, old.value_text);
+end;
+
+create trigger properties_fts_update
+after update on properties
+begin
+    insert into properties_fts
+        (properties_fts, id, value_text)
+    values
+        ('delete', old.id, old.value_text);
+    insert into properties_fts
+        (id, value_text)
+    values
+        (new.id, new.value_text);
+end;
+
 create table property_changes (
     id integer primary key autoincrement,
     object_id integer not null,

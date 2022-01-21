@@ -41,6 +41,22 @@
     margin: 15px;
 }
 
+.coverContainer {
+    width: 100%;
+    max-height: 200px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.coverContainer img {
+    display: block;
+    max-width: 100%;
+}
+
 .titleContainer {
     display: flex;
     flex-direction: row;

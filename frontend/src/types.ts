@@ -35,6 +35,7 @@ export interface ObjectSummaryRec {
     class_id: number;
     directory_id: number;
     icon_emoji: string;
+    cover_id: number;
     created_at: number;
     modified_at: number;
 }
@@ -59,6 +60,7 @@ export interface ObjectDetailRec {
     class_id: number;
     directory_id: number;
     icon_emoji: string;
+    cover_id: number;
     created_at: number;
     modified_at: number;
     properties: Array<PropValueRec>;

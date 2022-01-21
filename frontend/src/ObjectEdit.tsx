@@ -1,12 +1,14 @@
 import { MouseEvent, useEffect, useState } from "react";
 import Editor from "./Editor";
 import FilePropWidget from "./FilePropWidget";
-import { LinkRec, ObjectDetailRec, PropValueRec } from "./types";
+import { FileRec, LinkRec, ObjectDetailRec, PropValueRec } from "./types";
 import IconWidget from "./IconWidget";
 import styles from "./ObjectEdit.module.css";
 import { humanizeDate } from "./utils";
 import DirectorySelect from "./DirectorySelect";
 import { useNavigate } from "react-router-dom";
+import Modal from "./Modal";
+import FileUploadWidget from "./FileUploadWidget";
 
 interface Props {
     obj: ObjectDetailRec;
@@ -78,6 +80,7 @@ export default function ObjectEdit(props: Props) {
                     "title": title.trim(),
                     "directory_id": dirId,
                     "icon_emoji": emoji,
+                    "cover_id": props.obj.cover_id,
                     "values": propValues,
                 })
             }
@@ -96,8 +99,36 @@ export default function ObjectEdit(props: Props) {
         setDirId(dirId);
     }
 
-    function handleChangeCover(event: MouseEvent<HTMLImageElement>) {
-        event.preventDefault();
+    const [showCoverModal, setShowCoverModal] = useState<boolean>(false);
+    const [coverFile, setCoverFile] = useState<FileRec | null>(null);
+
+    function handleChangeCover() {
+        setShowCoverModal(false);
+        if (!coverFile) {
+            return;
+        }
+        fetch(`/api/objects/${props.obj.title}`,
+            {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    "title": props.obj.title,
+                    "directory_id": props.obj.directory_id,
+                    "icon_emoji": props.obj.icon_emoji,
+                    "cover_id": coverFile.id,
+                    "values": propValues,
+                })
+            }
+        )
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    window.alert(data.error.title + ": " + data.error.message);
+                }
+            });
     }
 
     function handleDelete(event: MouseEvent<HTMLImageElement>) {
@@ -131,6 +162,16 @@ export default function ObjectEdit(props: Props) {
     return (
         <div className={styles.container}>
             <div className={styles.box}>
+                <div className={styles.coverContainer}>
+                    {
+                        props.obj.cover_id ?
+                            <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
+                            :
+                            (coverFile ?
+                                <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
+                                : <span></span>)
+                    }
+                </div>
                 <div className={styles.titleContainer}>
                     <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
                     <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -141,7 +182,7 @@ export default function ObjectEdit(props: Props) {
                     </div>
                     <div className={styles.spacer}></div>
                     <div className={styles.menuRest}>
-                        <img src="/image.png" alt="" onClick={handleChangeCover} />
+                        <img src="/image.png" alt="" onClick={() => setShowCoverModal(true)} />
                         <img src="/bin-metal.png" alt="" onClick={handleDelete} />
                     </div>
                 </div>
@@ -203,6 +244,17 @@ export default function ObjectEdit(props: Props) {
                 </ul>
             </div>
             <button className={styles.button} onClick={handleSave}>Save</button>
+            <Modal
+                title="Change Cover"
+                visibility={showCoverModal}
+                body={
+                    <div>
+                        <FileUploadWidget onSuccess={f => setCoverFile(f)} />
+                    </div>
+                }
+                onDecline={() => setShowCoverModal(false)}
+                onAccept={handleChangeCover}
+            />
         </div>
     )
 }

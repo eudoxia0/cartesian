@@ -856,6 +856,7 @@ def new_object_endpoint():
     class_id: int = form["class_id"]
     directory_id: Optional[int] = form["directory_id"]
     icon_emoji: str = form["icon_emoji"].strip()
+    cover_id: Optional[int] = form["directory_id"]
     property_values: dict = form["values"]
     # If an object with this title exists, reject it
     conn: Connection = get_db()
@@ -902,6 +903,7 @@ def new_object_endpoint():
         class_id=class_id,
         directory_id=directory_id,
         icon_emoji=effective_icon_emoji,
+        cover_id=cover_id,
         created_at=created_at,
         modified_at=created_at,
     )
@@ -990,6 +992,7 @@ def new_object_endpoint():
         class_id=class_id,
         directory_id=directory_id,
         icon_emoji=effective_icon_emoji,
+        cover_id=cover_id,
         created_at=created_at,
         modified_at=created_at,
     )
@@ -1044,6 +1047,7 @@ def edit_object_endpoint(title: str):
     new_title: str = form["title"].strip()
     new_directory_id: Optional[int] = form["directory_id"]
     new_icon_emoji: str = form["icon_emoji"].strip()
+    new_cover_id: Optional[int] = form["cover_id"]
     property_values: dict = form["values"]
 
     # Find the directory, if any
@@ -1067,6 +1071,7 @@ def edit_object_endpoint(title: str):
         new_title=new_title,
         new_directory_id=new_directory_id,
         new_icon_emoji=new_icon_emoji,
+        new_cover_id=new_cover_id,
         modified_at=modified_at,
     )
 

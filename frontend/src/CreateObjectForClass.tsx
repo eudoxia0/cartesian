@@ -29,6 +29,7 @@ export default function CreateObjectForClass(props: Props) {
                     "class_id": props.cls.id,
                     "directory_id": dirId,
                     "icon_emoji": "",
+                    "cover_id": null,
                     "values": propValues,
                 })
             }

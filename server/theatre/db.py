@@ -406,6 +406,7 @@ class ObjectRec:
     class_id: int
     directory_id: Optional[int]
     icon_emoji: str
+    cover_id: int
     created_at: int
     modified_at: int
 
@@ -416,6 +417,7 @@ class ObjectRec:
             "class_id": self.class_id,
             "directory_id": self.directory_id,
             "icon_emoji": self.icon_emoji,
+            "cover_id": self.cover_id,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
         }
@@ -426,7 +428,7 @@ def list_objects(conn: Connection) -> List[ObjectRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, title, class_id, directory_id, icon_emoji, created_at, modified_at
+            id, title, class_id, directory_id, icon_emoji, cover_id, created_at, modified_at
         from
             objects
         order by
@@ -440,6 +442,7 @@ def list_objects(conn: Connection) -> List[ObjectRec]:
             class_id=row["class_id"],
             directory_id=row["directory_id"],
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )
@@ -452,7 +455,7 @@ def list_objects_in_directory(conn: Connection, dir_id: int) -> List[ObjectRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, title, class_id, icon_emoji, created_at, modified_at
+            id, title, class_id, icon_emoji, cover_id, created_at, modified_at
         from
             objects
         where
@@ -471,6 +474,7 @@ def list_objects_in_directory(conn: Connection, dir_id: int) -> List[ObjectRec]:
             class_id=row["class_id"],
             directory_id=dir_id,
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )
@@ -483,7 +487,7 @@ def list_uncategorized_objects(conn: Connection) -> List[ObjectRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, title, class_id, icon_emoji, created_at, modified_at
+            id, title, class_id, icon_emoji, cover_id, created_at, modified_at
         from
             objects
         where
@@ -499,6 +503,7 @@ def list_uncategorized_objects(conn: Connection) -> List[ObjectRec]:
             class_id=row["class_id"],
             directory_id=None,
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )
@@ -511,7 +516,7 @@ def get_object_by_title(conn: Connection, title: str) -> Optional[ObjectRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, class_id, directory_id, icon_emoji, created_at, modified_at
+            id, class_id, directory_id, icon_emoji, cover_id, created_at, modified_at
         from
             objects
         where
@@ -529,6 +534,7 @@ def get_object_by_title(conn: Connection, title: str) -> Optional[ObjectRec]:
             class_id=row["class_id"],
             directory_id=row["directory_id"],
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )
@@ -542,6 +548,7 @@ def create_object(
     class_id: int,
     directory_id: Optional[int],
     icon_emoji: str,
+    cover_id: Optional[int],
     created_at: int,
     modified_at: int,
 ) -> id:
@@ -549,9 +556,9 @@ def create_object(
     cur.execute(
         """
         insert into objects
-            (title, class_id, directory_id, icon_emoji, created_at, modified_at)
+            (title, class_id, directory_id, icon_emoji, cover_id, created_at, modified_at)
         values
-            (:title, :class_id, :directory_id, :icon_emoji, :created_at, :modified_at)
+            (:title, :class_id, :directory_id, :icon_emoji, :cover_id, :created_at, :modified_at)
         returning id;
         """,
         {
@@ -559,6 +566,7 @@ def create_object(
             "class_id": class_id,
             "directory_id": directory_id,
             "icon_emoji": icon_emoji,
+            "cover_id": cover_id,
             "created_at": created_at,
             "modified_at": modified_at,
         },
@@ -986,6 +994,7 @@ def update_object(
     new_title: str,
     new_directory_id: Optional[int],
     new_icon_emoji: str,
+    new_cover_id: int,
     modified_at: int,
 ):
     # Update the object itself
@@ -998,6 +1007,7 @@ def update_object(
             title = :title,
             directory_id = :directory_id,
             icon_emoji = :icon_emoji,
+            cover_id = :cover_id,
             modified_at = :modified_at
         where
             id = :object_id;
@@ -1007,6 +1017,7 @@ def update_object(
             "title": new_title,
             "directory_id": new_directory_id,
             "icon_emoji": new_icon_emoji,
+            "cover_id": new_cover_id,
             "modified_at": modified_at,
         },
     ).fetchall()
@@ -1061,7 +1072,7 @@ def search_objects_by_title(conn: Connection, title: str) -> List[ObjectRec]:
     rows: List[Tuple] = cur.execute(
         """
         select
-            id, title, class_id, directory_id, icon_emoji, created_at, modified_at
+            id, title, class_id, directory_id, icon_emoji, cover_id, created_at, modified_at
         from
             objects
         where
@@ -1078,6 +1089,7 @@ def search_objects_by_title(conn: Connection, title: str) -> List[ObjectRec]:
             class_id=row["class_id"],
             directory_id=row["directory_id"],
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )
@@ -1095,6 +1107,7 @@ def search_objects_by_property_text(conn: Connection, query: str) -> List[Object
             objects.class_id as class_id,
             objects.directory_id as directory_id,
             objects.icon_emoji as icon_emoji,
+            objects.cover_id as cover_id,
             objects.created_at as created_at,
             objects.modified_at as modified_at
         from
@@ -1124,6 +1137,7 @@ def search_objects_by_property_text(conn: Connection, query: str) -> List[Object
             class_id=row["class_id"],
             directory_id=row["directory_id"],
             icon_emoji=row["icon_emoji"],
+            cover_id=row["cover_id"],
             created_at=row["created_at"],
             modified_at=row["modified_at"],
         )

@@ -1,0 +1,118 @@
+.createObject {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.leftPane {
+    display: flex;
+    flex-direction: column;
+    min-width: 400px;
+    padding: 40px;
+    border-right: 1px solid #ccc;
+    height: 100%;
+}
+
+.leftPane h2 {
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 15px;
+}
+
+.leftPane li {
+    margin-left: 20px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.leftPane img {
+    display: block;
+    margin-right: 10px;
+}
+
+.rightPane {
+    padding: 40px;
+    height: 100%;
+}
+
+.container {
+    display: inline-block;
+    min-width: 1200px;
+    max-width: 1200px;
+}
+
+.box {
+    border: 1px solid #555;
+}
+
+.menuBar {
+    border-bottom: 1px solid #555;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.directoryContainer {
+    padding: 15px;
+    border-right: 1px solid #555;
+}
+
+
+.titleContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    padding: 25px;
+}
+
+.title {
+    border: none;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 3rem;
+    font-weight: normal;
+    width: 100%;
+    padding-left: 30px;
+}
+
+.title:focus {
+    outline:none;
+}
+
+.button {
+    margin: 30px;
+    margin-top: 15px;
+    border: 1px solid #ccc;
+    padding: 15px 30px;
+    background: transparent;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.properties {
+    border: none;
+    border-bottom: 1px solid #555;
+}
+
+.propTitle {
+    text-transform: uppercase;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: #555;
+    padding: 15px;
+    border-right: 1px solid #ccc;
+    border-bottom: none;
+    border-top: none;
+    text-align: right;
+    vertical-align: top;
+}
+
+.propValue {
+    padding: 15px;
+    width: 100%;
+    border: none;
+}

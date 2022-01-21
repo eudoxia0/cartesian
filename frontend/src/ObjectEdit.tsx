@@ -162,16 +162,18 @@ export default function ObjectEdit(props: Props) {
     return (
         <div className={styles.container}>
             <div className={styles.box}>
-                <div className={styles.coverContainer}>
-                    {
-                        coverFile ?
+                {
+                    coverFile ?
+                        <div className={styles.coverContainer}>
                             <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
-                            :
-                            (props.obj.cover_id ?
+                        </div>
+                        :
+                        (props.obj.cover_id ?
+                            <div className={styles.coverContainer}>
                                 <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
-                                : <span></span>)
-                    }
-                </div>
+                            </div>
+                            : <span></span>)
+                }
                 <div className={styles.titleContainer}>
                     <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
                     <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -255,6 +257,6 @@ export default function ObjectEdit(props: Props) {
                 onDecline={() => setShowCoverModal(false)}
                 onAccept={handleChangeCover}
             />
-        </div>
+        </div >
     )
 }

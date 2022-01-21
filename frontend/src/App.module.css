@@ -64,6 +64,7 @@
 
 .rightPane {
     flex: 1;
+    overflow: scroll;
 }
 
 .spacer {

@@ -164,11 +164,11 @@ export default function ObjectEdit(props: Props) {
             <div className={styles.box}>
                 <div className={styles.coverContainer}>
                     {
-                        props.obj.cover_id ?
-                            <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
+                        coverFile ?
+                            <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
                             :
-                            (coverFile ?
-                                <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
+                            (props.obj.cover_id ?
+                                <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
                                 : <span></span>)
                     }
                 </div>

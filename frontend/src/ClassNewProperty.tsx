@@ -31,7 +31,7 @@ export default function ClassNewProperty(props: Props) {
             restoreDefaults();
             return;
         };
-        fetch(`http://localhost:5000/api/classes/${props.id}/properties`,
+        fetch(`/api/classes/${props.id}/properties`,
             {
                 headers: {
                     "Accept": "application/json",

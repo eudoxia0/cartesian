@@ -10,22 +10,26 @@ interface State {
 }
 
 export default function ObjectView() {
-    const [state, setState] = useState<State>({ loaded: false, obj: null });
     let params = useParams();
+    const [title, setTitle] = useState<string>(params.title || "");
+    const [state, setState] = useState<State>({ loaded: false, obj: null });
 
     useEffect(() => {
-        if (!state.loaded) {
-            fetch(`http://localhost:5000/api/objects/${params.title}`)
-                .then(res => res.json())
-                .then((data) => {
-                    if (data.data) {
-                        setState({ loaded: true, obj: data.data });
-                    } else {
-                        setState({ loaded: true, obj: null });
-                    }
-                });
-        }
-    });
+        setTitle(params.title || "");
+    }, [params]);
+
+    useEffect(() => {
+        setState({ loaded: false, obj: null });
+        fetch(`/api/objects/${title}`)
+            .then(res => res.json())
+            .then((data) => {
+                if (data.data) {
+                    setState({ loaded: true, obj: data.data });
+                } else {
+                    setState({ loaded: true, obj: null });
+                }
+            });
+    }, [title]);
 
     if (state.loaded) {
         if (state.obj) {

@@ -12,7 +12,7 @@ export default function Settings() {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch("http://localhost:5000/api/tex-macros")
+            fetch("/api/tex-macros")
                 .then(res => res.json())
                 .then((data) => {
                     setState({ loaded: true, macros: data.data });
@@ -30,7 +30,7 @@ export default function Settings() {
 
     function handleSaveMacros(event: MouseEvent<HTMLButtonElement>) {
         event.preventDefault();
-        fetch("http://localhost:5000/api/tex-macros",
+        fetch("/api/tex-macros",
             {
                 headers: {
                     "Accept": "application/json",

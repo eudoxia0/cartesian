@@ -14,7 +14,7 @@ export default function UncategorizedObjects() {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch(`http://localhost:5000/api/uncategorized-objects`)
+            fetch(`/api/uncategorized-objects`)
                 .then(res => res.json())
                 .then((data) => setState({ loaded: true, objects: data.data }));
         }

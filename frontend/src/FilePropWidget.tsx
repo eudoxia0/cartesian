@@ -17,7 +17,7 @@ export default function FilePropWidget(props: Props) {
         const file = acceptedFiles[0];
         var data = new FormData()
         data.append('data', file);
-        fetch("http://localhost:5000/api/files",
+        fetch("/api/files",
             {
                 method: "POST",
                 body: data,

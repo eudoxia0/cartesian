@@ -6,7 +6,7 @@ import IconWidget from "./IconWidget";
 import styles from "./ObjectEdit.module.css";
 import { humanizeDate } from "./utils";
 import DirectorySelect from "./DirectorySelect";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
     obj: ObjectDetailRec;
@@ -67,7 +67,7 @@ export default function ObjectEdit(props: Props) {
             window.alert("The title of an object cannot be empty.");
             return;
         }
-        fetch(`http://localhost:5000/api/objects/${props.obj.title}`,
+        fetch(`/api/objects/${props.obj.title}`,
             {
                 headers: {
                     "Accept": "application/json",
@@ -96,9 +96,14 @@ export default function ObjectEdit(props: Props) {
         setDirId(dirId);
     }
 
+    function handleChangeCover(event: MouseEvent<HTMLImageElement>) {
+        event.preventDefault();
+    }
+
     function handleDelete(event: MouseEvent<HTMLImageElement>) {
+        event.preventDefault();
         if (window.confirm("Are you sure you want to delete this object?")) {
-            fetch(`http://localhost:5000/api/objects/${props.obj.title}`,
+            fetch(`/api/objects/${props.obj.title}`,
                 {
                     headers: {
                         "Accept": "application/json",
@@ -118,6 +123,11 @@ export default function ObjectEdit(props: Props) {
         }
     }
 
+    function goTo(url: string) {
+        console.log(url);
+        navigate(url);
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.box}>
@@ -131,6 +141,7 @@ export default function ObjectEdit(props: Props) {
                     </div>
                     <div className={styles.spacer}></div>
                     <div className={styles.menuRest}>
+                        <img src="/image.png" alt="" onClick={handleChangeCover} />
                         <img src="/bin-metal.png" alt="" onClick={handleDelete} />
                     </div>
                 </div>
@@ -182,9 +193,9 @@ export default function ObjectEdit(props: Props) {
                         props.obj.links.map((link: LinkRec) => {
                             return (
                                 <li key={link.title}>
-                                    <Link to={`/objects/${link.title}`}>
+                                    <span onClick={_ => goTo(`/objects/${link.title}`)}>
                                         {link.title}
-                                    </Link>
+                                    </span>
                                 </li>
                             );
                         })

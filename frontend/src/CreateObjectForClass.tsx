@@ -17,7 +17,7 @@ export default function CreateObjectForClass(props: Props) {
             window.alert("The title of an object cannot be empty.");
             return;
         }
-        fetch("http://localhost:5000/api/objects",
+        fetch("/api/objects",
             {
                 headers: {
                     "Accept": "application/json",

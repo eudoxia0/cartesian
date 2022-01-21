@@ -12,7 +12,7 @@ export default function SearchPage() {
         const effQuery: string = query.trim();
         if (effQuery.length > 0) {
             console.log("Querying: ", effQuery);
-            fetch("http://localhost:5000/api/object-search",
+            fetch("/api/object-search",
                 {
                     headers: {
                         "Accept": "application/json",

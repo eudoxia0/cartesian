@@ -46,7 +46,7 @@ export default function App() {
 
   useEffect(() => {
     if (!loaded) {
-      fetch("http://localhost:5000/api/directories")
+      fetch("/api/directories")
         .then(res => res.json())
         .then((data) => {
           setLoaded(true);
@@ -135,6 +135,6 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
         </Routes>
       </div>
-    </div >
+    </div>
   );
 }

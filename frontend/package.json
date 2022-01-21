@@ -63,5 +63,6 @@
     "@types/emoji-mart": "^3.0.9",
     "@types/prosemirror-model": "^1.13.2",
     "@types/prosemirror-schema-list": "^1.0.3"
-  }
+  },
+  "proxy": "http://localhost:5000"
 }

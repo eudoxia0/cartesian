@@ -15,7 +15,7 @@ export default function FilePreviewWidget(props: Props) {
     const [state, setState] = useState<State>({ loaded: false, file: null });
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/files/${props.id}`)
+        fetch(`/api/files/${props.id}`)
             .then(res => res.json())
             .then((data) => {
                 setState({ loaded: true, file: data.data });

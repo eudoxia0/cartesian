@@ -18,7 +18,7 @@ export default function ClassProperties(props: Props) {
 
     function handleDeleteProp(propId: number) {
         if (window.confirm("Deleting this class property will delete all instances of this property across all objects of this class. Proceed?")) {
-            fetch(`http://localhost:5000/api/classes/${props.classId}/properties/${propId}`,
+            fetch(`/api/classes/${props.classId}/properties/${propId}`,
                 {
                     headers: {
                         "Accept": "application/json",

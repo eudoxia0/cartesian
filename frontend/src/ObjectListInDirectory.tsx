@@ -16,7 +16,7 @@ export default function ObjectListInDirectory(props: { id: number }) {
     useEffect(() => setDirId(props.id), [props.id]);
     useEffect(() => {
         if (dirId) {
-            fetch(`http://localhost:5000/api/directories/${dirId}/objects`)
+            fetch(`/api/directories/${dirId}/objects`)
                 .then(res => res.json())
                 .then((data) => setState({ loaded: true, objects: data.data }));
         }

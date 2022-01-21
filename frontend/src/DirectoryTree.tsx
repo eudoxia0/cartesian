@@ -73,7 +73,7 @@ export default function DirectoryTree() {
 
     function handleDrop(newTreeData: Array<TreeNode>) {
         newTreeData.forEach((tree: TreeNode) =>
-            fetch(`http://localhost:5000/api/directories/${tree.id}`,
+            fetch(`/api/directories/${tree.id}`,
                 {
                     headers: {
                         "Accept": "application/json",
@@ -109,7 +109,7 @@ export default function DirectoryTree() {
             window.alert("Directory titles can't be empty.");
             return;
         }
-        fetch("http://localhost:5000/api/directories",
+        fetch("/api/directories",
             {
                 headers: {
                     "Accept": "application/json",
@@ -148,7 +148,7 @@ export default function DirectoryTree() {
         setEditDir(null);
         setEditTitle("");
         setEditEmoji("");
-        fetch(`http://localhost:5000/api/directories/${dir.id}`,
+        fetch(`/api/directories/${dir.id}`,
             {
                 headers: {
                     "Accept": "application/json",
@@ -186,7 +186,7 @@ export default function DirectoryTree() {
         setEditDir(null);
         setEditTitle("");
         setEditEmoji("");
-        fetch(`http://localhost:5000/api/directories/${dir.id}`,
+        fetch(`/api/directories/${dir.id}`,
             {
                 headers: {
                     "Accept": "application/json",

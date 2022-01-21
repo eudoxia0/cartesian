@@ -14,7 +14,7 @@ export default function FileList() {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch("http://localhost:5000/api/files")
+            fetch("/api/files")
                 .then(res => res.json())
                 .then((data) => setState({ files: data.data, loaded: true }));
         }

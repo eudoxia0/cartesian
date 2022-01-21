@@ -15,7 +15,7 @@ export default function ClassList() {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch("http://localhost:5000/api/classes")
+            fetch("/api/classes")
                 .then(res => res.json())
                 .then((data) => setState({ classes: data.data, loaded: true }));
         }
@@ -27,7 +27,7 @@ export default function ClassList() {
         if (title.length === 0) {
             window.alert("The title of a class cannot be empty.");
         } else {
-            fetch("http://localhost:5000/api/classes",
+            fetch("/api/classes",
                 {
                     headers: {
                         "Accept": "application/json",
@@ -58,7 +58,7 @@ export default function ClassList() {
 
     function handleDeleteClass(classId: number) {
         if (window.confirm("Deleting this class will delete all objects with this class. Proceed?")) {
-            fetch(`http://localhost:5000/api/classes/${classId}`,
+            fetch(`/api/classes/${classId}`,
                 {
                     headers: {
                         "Accept": "application/json",
@@ -77,7 +77,7 @@ export default function ClassList() {
     }
 
     function handleEmojiChange(cls: ClassRec, emojiId: string) {
-        fetch(`http://localhost:5000/api/classes/${cls.id}`,
+        fetch(`/api/classes/${cls.id}`,
             {
                 headers: {
                     "Accept": "application/json",

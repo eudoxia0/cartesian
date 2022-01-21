@@ -9,7 +9,7 @@ interface Props {
 
 export default function FilePreview(props: Props) {
     const mime_type = props.mime_type;
-    const url = `http://localhost:5000/api/files/${props.id}/contents`;
+    const url = `/api/files/${props.id}/contents`;
 
     function isType(list: Array<string>) {
         return list.some(elem => mime_type.startsWith(elem));

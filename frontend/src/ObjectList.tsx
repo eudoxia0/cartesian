@@ -14,7 +14,7 @@ export default function ObjectList() {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch("http://localhost:5000/api/objects")
+            fetch("/api/objects")
                 .then(res => res.json())
                 .then((data) => setState({ loaded: true, objects: data.data }));
         }

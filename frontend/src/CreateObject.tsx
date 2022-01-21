@@ -36,7 +36,7 @@ export default function CreateObject(props: { defaultTitle: string }) {
 
     useEffect(() => {
         if (!state.loaded) {
-            fetch("http://localhost:5000/api/classes")
+            fetch("/api/classes")
                 .then(res => res.json())
                 .then((data) => setState({ loaded: true, classes: data.data }));
         }

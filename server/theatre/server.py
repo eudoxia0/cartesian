@@ -1293,15 +1293,3 @@ def get_query_param(req, name: str) -> str:
             "Bad Request",
             f"Missing '{name}' query parameter when trying to upload a file.",
         )
-
-
-# Public interface
-
-
-@bp.after_request
-def apply_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = 1728000
-    return response

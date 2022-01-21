@@ -16,7 +16,7 @@ export default function ClassDetail() {
     useEffect(() => {
         if (!state.loaded) {
             let id = parseInt(params.classId || "", 10);
-            fetch(`http://localhost:5000/api/classes/${id}`)
+            fetch(`/api/classes/${id}`)
                 .then(res => res.json())
                 .then((data) => {
                     const cls = data.data;

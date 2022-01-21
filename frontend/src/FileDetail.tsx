@@ -16,7 +16,7 @@ export default function FileDetail() {
     useEffect(() => {
         if (!state.loaded) {
             let id = parseInt(params.fileId || "", 10);
-            fetch(`http://localhost:5000/api/files/${id}`)
+            fetch(`/api/files/${id}`)
                 .then(res => res.json())
                 .then((data) => {
                     setState({ loaded: true, file: data.data });
@@ -49,7 +49,7 @@ export default function FileDetail() {
                             </li>
                             <li>
                                 <b>Download:</b>
-                                <a target="_blank" rel="noreferrer" href={`http://localhost:5000/api/files/${file.id}/contents`}>
+                                <a target="_blank" rel="noreferrer" href={`/api/files/${file.id}/contents`}>
                                     Download
                                 </a>
                             </li>

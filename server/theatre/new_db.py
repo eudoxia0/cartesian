@@ -115,6 +115,16 @@ class ClassPropRec:
     description: str
     select_options: List[str]
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "class_id": self.class_id,
+            "title": self.title,
+            "type": self.type.value,
+            "description": self.description,
+            "select_options": self.select_options,
+        }
+
 
 @dataclass(frozen=True)
 class ObjectRec:

@@ -468,6 +468,37 @@ class Database(object):
         else:
             return None
 
+    def edit_directory(
+        self,
+        dir_id: int,
+        title: str,
+        icon_emoji: str,
+        cover_id: int | None,
+        parent_id: int | None,
+    ):
+        cur: Cursor = self.conn.cursor()
+        cur.execute(
+            """
+            update
+                directories
+            set
+                title = :title,
+                icon_emoji = :icon_emoji,
+                cover_id = :cover_id
+                parent_id = :parent_id
+            where
+                id = :id;
+            """,
+            {
+                "id": dir_id,
+                "title": title,
+                "icon_emoji": icon_emoji,
+                "cover_id": cover_id,
+                "parent_id": parent_id,
+            },
+        )
+        self.conn.commit()
+
     #
     # Class methods
     #

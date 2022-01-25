@@ -61,6 +61,16 @@ class FileRec:
     hash: str
     created_at: int
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "filename": self.filename,
+            "mime_type": self.mime_type,
+            "size": self.size,
+            "hash": self.hash,
+            "created_at": self.created_at,
+        }
+
 
 @dataclass(frozen=True)
 class DirRec:

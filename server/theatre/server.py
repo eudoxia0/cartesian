@@ -8,7 +8,7 @@ import tempfile
 import hashlib
 import subprocess
 from sqlite3 import Connection, Cursor
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Tuple
 
 from flask import make_response, Response, current_app, g
 from theatre.error import CTError
@@ -59,6 +59,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
+from theatre.new_db import Database, FileRec
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
@@ -74,154 +75,18 @@ bp = Blueprint("api", __name__, url_prefix="")
 
 @bp.route("/api/files", methods=["GET"])
 def list_files():
-    """
-    # File List Endpoint
-
-    ## Description
-
-    List all files.
-
-    ## Output
-
-    The `data` property is an array of objects with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl "http://localhost:5000/api/files"
-    {
-      "data": [
-        {
-          "created_at": 1640537314080,
-          "filename": "derp",
-          "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-          "id": 1,
-          "mime_type": "image/png",
-          "size": 1451277
-        }
-      ],
-      "error": null,
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            id, filename, mime_type, size, hash, created_at
-        from
-            files
-        order by
-            created_at desc;
-        """
-    ).fetchall()
     return {
         "error": None,
-        "data": [
-            {
-                "id": row[0],
-                "filename": row[1],
-                "mime_type": row[2],
-                "size": row[3],
-                "hash": row[4],
-                "created_at": row[5],
-            }
-            for row in results
-        ],
+        "data": [rec.to_json() for rec in get_db().list_files()],
     }
 
 
 @bp.route("/api/files/<int:file_id>", methods=["GET"])
 def get_file(file_id: int):
-    """
-    # File Retrieval Endpoint
-
-    ## Description
-
-    Return the metadata associated with a file.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The `data` property is an object with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl -v "http://localhost:5000/api/files/3/contents" -o file.png
-    [...]
-    < Content-Type: image/png
-    [...]
-
-    $ curl "http://localhost:5000/api/files/7"
-    {
-      "data": {
-        "created_at": 1640539572771,
-        "filename": "kustodiev.png",
-        "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-        "id": 7,
-        "mime_type": "image/png",
-        "size": 1451277
-      },
-      "error": null
-    }
-
-    $ curl "http://localhost:5000/api/files/8"
-    {
-      "data": null,
-      "error": {
-        "message": "The file with the ID '8' was not found in the database.",
-        "title": "File Not Found"
-      }
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            filename, mime_type, size, hash, created_at
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    ).fetchall()
-    if results:
-        row = results[0]
+    file: FileRec | None = get_db().get_file_by_id(file_id)
+    if file is not None:
         return {
-            "data": {
-                "id": file_id,
-                "filename": row[0],
-                "mime_type": row[1],
-                "size": row[2],
-                "hash": row[3],
-                "created_at": row[4],
-            },
+            "data": file.to_json(),
             "error": None,
         }
     else:
@@ -233,58 +98,9 @@ def get_file(file_id: int):
 
 @bp.route("/api/files/<int:file_id>/contents", methods=["GET"])
 def file_contents(file_id: int):
-    """
-    # File Contents Endpoint
-
-    ## Description
-
-    Retrieve the byte stream of a file's data.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The byte stream of the underlying file, or a JSON document containing an error message.
-
-    ## Example
-
-    ```
-    $ curl -v "http://localhost:5000/api/files/3/contents" -o file.png
-    [...]
-    < Content-Type: image/png
-    [...]
-
-    $ curl "http://localhost:5000/api/files/123/contents"
-    {
-      "data": null,
-      "error": {
-        "title": "File Not Found",
-        "message": "The file with the ID '123' was not found in the database."
-      }
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            mime_type, data
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    ).fetchall()
-    if results:
-        mime_type, blob = results[0]
-        assert isinstance(mime_type, str)
-        assert isinstance(blob, bytes)
+    data: Tuple[str, bytes] | None = get_db().get_file_data(file_id)
+    if data is not None:
+        mime_type, blob = data
         return Response(blob, mimetype=mime_type)
     else:
         raise CTError(
@@ -295,46 +111,6 @@ def file_contents(file_id: int):
 
 @bp.route("/api/files", methods=["POST"])
 def upload_file():
-    """
-    # File Upload Endpoint
-
-    ## Description
-
-    Upload a file.
-
-    ## Request Body
-
-    The POST body must be the file contents.
-
-    ## Output
-
-    The `data` property is an object with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl -X POST "http://localhost:5000/api/files" -F "data=@/home/eudoxia/pic.png"
-    {
-      "data": {
-        "created_at": 1640536346827,
-        "filename": "pic.png",
-        "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-        "id": 6,
-        "size": 1451277
-      },
-      "error": null
-    }
-    ```
-
-    """
     # Extract file data, put it in a temporary file.
     file_data = request.files["data"]
     filename: str = secure_filename(file_data.filename)
@@ -345,95 +121,34 @@ def upload_file():
     size: int = len(blob)
     sha256hash: str = hashlib.sha256(blob).hexdigest()
     created_at: int = now_millis()
-    db = get_db()
-    file_id: int = create_file(
-        conn=db,
+    file_id: int = get_db().create_file(
+        filename=filename,
+        mime_type=mime_type,
+        size=size,
+        sha256hash=sha256hash,
+        created_at=created_at,
+        blob=blob,
+    )
+    rec: FileRec = FileRec(
+        id=file_id,
         filename=filename,
         mime_type=mime_type,
         size=size,
         hash=sha256hash,
         created_at=created_at,
-        blob=blob,
     )
     # Return file data
     return {
-        "data": {
-            "id": file_id,
-            "filename": filename,
-            "mime_type": mime_type,
-            "size": size,
-            "hash": sha256hash,
-            "created_at": created_at,
-        },
+        "data": rec.to_json(),
         "error": None,
     }
 
 
 @bp.route("/api/files/<int:file_id>", methods=["DELETE"])
 def delete_file(file_id: int):
-    """
-    # File Deletion Endpoint
-
-    ## Description
-
-    Endpoint to delete a file.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The `data` property is a boolean that is `true` on success`, and `null` otherwise.
-
-    ## Example
-
-    ```
-    $  curl -X DELETE "http://localhost:5000/api/files/8"
-    {
-      "data": true,
-      "error": null
-    }
-
-    $> curl -X DELETE "http://localhost:5000/api/files/8"
-    {
-      "data": null,
-      "error": {
-        "message": "The file with the ID '8' was not found in the database.",
-        "title": "File Not Found"
-      }
-    }
-    ```
-
-    """
-    db: Connection = get_db()
-    cur: Cursor = db.cursor()
-    cur.execute(
-        """
-        select
-            id
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    )
-    if cur.fetchall():
-        cur.execute(
-            """
-            delete from
-                files
-            where
-                id = :id
-            """,
-            {
-                "id": file_id,
-            },
-        )
-        db.commit()
+    db: Database = get_db()
+    if db.file_exists(file_id):
+        db.delete_file(file_id)
         return {
             "data": True,
             "error": None,

@@ -127,6 +127,18 @@ class ObjectRec:
     created_at: int
     modified_at: int
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "class_id": self.class_id,
+            "directory_id": self.directory_id,
+            "icon_emoji": self.icon_emoji,
+            "cover_id": self.cover_id,
+            "created_at": self.created_at,
+            "modified_at": self.modified_at,
+        }
+
 
 @dataclass(frozen=True)
 class PropRec:

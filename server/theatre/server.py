@@ -54,7 +54,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
-from theatre.new_db import Database, FileRec, DirRec, ClassDetailRec
+from theatre.new_db import Database, FileRec, DirRec, ClassDetailRec, ClassPropRec
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
@@ -331,14 +331,14 @@ def new_class_endpoint():
 
 @bp.route("/api/classes/<int:cls_id>/properties", methods=["GET"])
 def get_class_properties_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if not class_exists(conn, cls_id):
+    db: Database = get_db()
+    if not db.class_exists(cls_id):
         raise CTError(
             "Class Not Found",
             f"The class with the ID '{cls_id}' was not found in the database.",
         )
     else:
-        records: List[ClassPropertyRec] = get_class_properties(conn, cls_id)
+        records: List[ClassPropRec] = db.get_class_properties(cls_id)
         return {
             "error": None,
             "data": [rec.to_json() for rec in records],

@@ -1182,6 +1182,34 @@ class Database(object):
         self.conn.commit()
         return link_id
 
+    def get_dangling_links_to_title(self, to_object_title: str) -> List[DanglingLinkRec]:
+        """
+        Retrieve dangling links to an object with the given title.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                id, from_object_id, from_property_id
+            from
+                dangling_links
+            where
+                to_object_title = :to_object_title;
+            """,
+            {
+                "to_object_title": to_object_title,
+            },
+        ).fetchall()
+        return [
+            DanglingLinkRec(
+                id=row["id"],
+                from_object_id=row["from_object_id"],
+                from_property_id=row["from_property_id"],
+                to_object_title=to_object_title,
+            )
+            for row in rows
+        ]
+
     #
     # Search methods
     #

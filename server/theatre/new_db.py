@@ -363,6 +363,35 @@ class Database(object):
     # Directory methods
     #
 
+    def create_directory(
+        self,
+        title: str,
+        icon_emoji: str,
+        cover_id: int | None,
+        parent_id: int | None,
+        created_at: int,
+    ) -> int:
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            insert into directories
+                (title, icon_emoji, cover_id, parent_id, created_at)
+            values
+                (:title, :icon_emoji, :cover_id, :parent_id, :created_at)
+            returning id;
+            """,
+            {
+                "title": title,
+                "icon_emoji": icon_emoji,
+                "cover_id": cover_id,
+                "parent_id": parent_id,
+                "created_at": created_at,
+            },
+        ).fetchall()
+        dir_id: int = rows[0]["id"]
+        self.conn.commit()
+        return dir_id
+
     def directory_exists(self, dir_id: int) -> bool:
         """
         Check whether a directory exists.
@@ -382,6 +411,62 @@ class Database(object):
             },
         ).fetchall()
         return bool(rows)
+
+    def list_directories(self) -> Iterable[DirRec]:
+        """
+        Return the list of all directories.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                id, title, icon_emoji, cover_id, parent_id, created_at
+            from
+                directories;
+            """
+        ).fetchall()
+        return [
+            DirRec(
+                id=row["id"],
+                title=row["title"],
+                icon_emoji=row["icon_emoji"],
+                cover_id=row["cover_id"],
+                parent_id=row["parent_id"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
+
+    def get_directory(self, dir_id: int) -> DirRec | None:
+        """
+        Return the list of all directories.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                title, icon_emoji, cover_id, parent_id, created_at
+            from
+                directories
+            where
+                id = :id;
+            """,
+            {
+                "id": dir_id,
+            },
+        ).fetchall()
+        if rows:
+            row = rows[0]
+            return DirRec(
+                id=row["id"],
+                title=row["title"],
+                icon_emoji=row["icon_emoji"],
+                cover_id=row["cover_id"],
+                parent_id=row["parent_id"],
+                created_at=row["created_at"],
+            )
+        else:
+            return None
 
     #
     # Class methods

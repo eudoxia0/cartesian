@@ -98,6 +98,13 @@ class ClassRec:
     title: str
     icon_emoji: str
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "icon_emoji": self.icon_emoji,
+        }
+
 
 @dataclass(frozen=True)
 class ClassPropRec:

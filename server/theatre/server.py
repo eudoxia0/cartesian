@@ -68,46 +68,6 @@ bp = Blueprint("api", __name__, url_prefix="")
 
 
 #
-# Tex macro endpoints
-#
-
-
-@bp.route("/api/tex-macros", methods=["GET"])
-def get_tex_macros_endpoint():
-    """
-    ```
-    $> curl "http://localhost:5000/api/tex-macros"
-    {
-      "data": "test",
-      "error": null,
-    }
-    ```
-    """
-    return {
-        "error": None,
-        "data": get_tex_macros(get_db()),
-    }
-
-
-@bp.route("/api/tex-macros", methods=["POST"])
-def update_tex_macros():
-    """
-    ```
-    $> curl -X POST "http://localhost:5000/api/tex-macros" -H 'Content-Type: application/json' -d '{ "macros": "test" }'
-    {
-      "data": null,
-      "error": null,
-    }
-    ```
-    """
-    set_tex_macros(get_db(), request.json["macros"])
-    return {
-        "error": None,
-        "data": None,
-    }
-
-
-#
 # File endpoints
 #
 

@@ -762,19 +762,19 @@ def edit_object_endpoint(title: str):
 @bp.route("/api/objects/<path:title>", methods=["DELETE"])
 def delete_object_endpoint(title: str):
     # Retrieve the object
-    conn: Connection = get_db()
-    obj: Optional[ObjectRec] = get_object_by_title(conn, title)
-    if obj is None:
-        raise CTError(
-            "Object Not Found",
-            f"The object with the title '{title}' was not found in the database.",
-        )
-    else:
-        delete_object(conn, obj.id)
+    db: Database = get_db()
+    obj: ObjectRec | None = db.get_object_by_title(title)
+    if obj is not None:
+        db.delete_object(obj.id)
         return {
             "data": None,
             "error": None,
         }
+    else:
+        raise CTError(
+            "Object Not Found",
+            f"The object with the title '{title}' was not found in the database.",
+        )
 
 
 @bp.route("/api/object-search", methods=["POST"])

@@ -394,12 +394,11 @@ def delete_class_property_endpoint(cls_id: int, cls_prop_id: int):
 
 @bp.route("/api/classes/<int:cls_id>", methods=["DELETE"])
 def delete_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    rec: Optional[ClassRec] = get_class(conn, cls_id)
-    if rec is not None:
-        delete_class(conn, rec.id)
+    db: Database = get_db()
+    if db.class_exists(cls_id):
+        db.delete_class(cls_id)
         return {
-            "data": None,
+            "data": True,
             "error": None,
         }
     else:

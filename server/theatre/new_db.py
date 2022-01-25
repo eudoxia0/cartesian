@@ -246,9 +246,7 @@ class Database(object):
             select
                 id, filename, mime_type, size, hash, created_at
             from
-                files
-            order by
-                created_at desc;
+                files;
             """
         ).fetchall()
         return [
@@ -262,6 +260,37 @@ class Database(object):
             )
             for row in rows
         ]
+
+    def get_file_by_id(self, file_id: int) -> FileRec | None:
+        """
+        List all files in the database.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                filename, mime_type, size, hash, created_at
+            from
+                files
+            where
+                id = :id;
+            """,
+            {
+                "id": file_id,
+            }
+        ).fetchall()
+        if rows:
+            row: Row = rows[0]
+            return FileRec(
+                id=file_id,
+                filename=row["filename"],
+                mime_type=row["mime_type"],
+                size=row["size"],
+                hash=row["hash"],
+                created_at=row["created_at"],
+            )
+        else:
+            return None
 
     #
     # Directory methods

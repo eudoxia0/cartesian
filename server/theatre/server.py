@@ -300,13 +300,11 @@ def list_classes_endpoint():
 
 @bp.route("/api/classes/<int:cls_id>", methods=["GET"])
 def get_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    rec: Optional[ClassRec] = get_class(conn, cls_id)
-    if rec is not None:
-        obj = rec.to_json()
-        obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
+    db: Database = get_db()
+    cls: ClassRec | None = db.get_class(cls_id)
+    if cls is not None:
         return {
-            "data": obj,
+            "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)),
             "error": None,
         }
     else:

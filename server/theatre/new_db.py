@@ -1122,6 +1122,9 @@ class Database(object):
         self.conn.commit()
 
     def get_links_to_object(self, obj_id: int) -> List[LinkRepr]:
+        """
+        Retrieve the links to an object as link representation objects.
+        """
         cur: Cursor = self.conn.cursor()
         rows: List[Row] = cur.execute(
             """

@@ -509,6 +509,24 @@ class Database(object):
         )
         self.conn.commit()
 
+    def delete_directory(self, dir_id: int):
+        """
+        Delete a directory.
+        """
+        cur: Cursor = self.conn.cursor()
+        cur.execute(
+            """
+            delete from
+                directories
+            where
+                id = :dir_id;
+            """,
+            {
+                "dir_id": dir_id,
+            },
+        )
+        self.conn.commit()
+
     #
     # Class methods
     #

@@ -316,15 +316,15 @@ def get_class_endpoint(cls_id: int):
 
 @bp.route("/api/classes", methods=["POST"])
 def new_class_endpoint():
-    conn: Connection = get_db()
+    # Parse input
     form: dict = request.json
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
-    rec: ClassRec = create_class(conn, title, icon_emoji)
-    obj = rec.to_json()
-    obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
+    # Create
+    db: Database = get_db()
+    cls: ClassRec = db.create_class(title=title, icon_emoji=icon_emoji)
     return {
-        "data": obj,
+        "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json,
         "error": None,
     }
 

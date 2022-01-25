@@ -859,7 +859,7 @@ def millis_to_datetime(millis: int) -> datetime:
 
 def determine_mime_type(blob: bytes) -> str:
     """
-    Determine the MIME type of a byte stream.
+    Determine the MIME-type of a byte stream.
     """
     # Write the contents to a temporary file
     stream = tempfile.NamedTemporaryFile()

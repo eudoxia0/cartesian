@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Iterable, Dict, Tuple
-from sqlite3 import Connection, Cursor, Row
+from sqlite3 import Connection, Cursor, Row, connect
 from theatre.prosemirror import parse_document, emit_document
 from theatre.rename_link import rename_link
 
@@ -177,6 +177,21 @@ class Database(object):
 
     def __init__(self, conn: Connection):
         self.conn = conn
+
+    @staticmethod
+    def connect(database_path: str) -> "Database":
+        conn: Connection = connect(database_path)
+        conn.row_factory = Row
+        cur: Cursor = conn.cursor()
+        cur.execute("pragma foreign_keys=on;")
+        conn.commit()
+        return Database(conn=conn)
+
+    def close(self):
+        self.conn.close()
+
+    def create_schema(self, sql: str):
+        self.conn.executescript(sql)
 
     #
     # File methods

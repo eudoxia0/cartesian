@@ -236,6 +236,33 @@ class Database(object):
         ).fetchall()
         return bool(rows)
 
+    def list_files(self) -> List[FileRec]:
+        """
+        List all files in the database.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                id, filename, mime_type, size, hash, created_at
+            from
+                files
+            order by
+                created_at desc;
+            """
+        ).fetchall()
+        return [
+            FileRec(
+                id=row["id"],
+                filename=row["filename"],
+                mime_type=row["mime_type"],
+                size=row["size"],
+                hash=row["hash"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
+
     #
     # Directory methods
     #

@@ -4,7 +4,7 @@ This module implements the persistence layer.
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Iterable, Dict
+from typing import List, Iterable, Dict, Tuple
 from sqlite3 import Connection, Cursor, Row
 from theatre.prosemirror import parse_document, emit_document
 from theatre.rename_link import rename_link
@@ -263,7 +263,7 @@ class Database(object):
 
     def get_file_by_id(self, file_id: int) -> FileRec | None:
         """
-        List all files in the database.
+        Retrieve a file by its ID.
         """
         cur: Cursor = self.conn.cursor()
         rows: List[Row] = cur.execute(
@@ -289,6 +289,30 @@ class Database(object):
                 hash=row["hash"],
                 created_at=row["created_at"],
             )
+        else:
+            return None
+
+    def get_file_data(self, file_id: int) -> Tuple[str, bytes] | None:
+        """
+        Retrieve a file's MIME type and data.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                mime_type, data
+            from
+                files
+            where
+                id = :id;
+            """,
+            {
+                "id": file_id,
+            }
+        ).fetchall()
+        if rows:
+            row: Row = rows[0]
+            return row["mime_type"], row["data"]
         else:
             return None
 

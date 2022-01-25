@@ -14,38 +14,6 @@ from flask import make_response, Response, current_app, g
 from theatre.error import CTError
 from theatre.extract_links import extract_links
 from theatre.flask_db import get_db
-from theatre.db import (
-    directory_exists,
-    list_classes,
-    get_class,
-    create_class,
-    class_exists,
-    ClassPropertyRec,
-    get_class_properties,
-    create_class_property,
-    PropertyType,
-    file_exists,
-    ClassRec,
-    get_object_by_title,
-    create_object,
-    create_property,
-    create_property_change,
-    ObjectRec,
-    list_objects,
-    PropertyRec,
-    list_object_properties,
-    create_link,
-    get_object_property,
-    delete_links_from,
-    edit_property,
-    update_object,
-    class_property_exists,
-    delete_class_property,
-    update_class,
-    get_links_to_object,
-    delete_object,
-    search_objects,
-)
 
 from flask import (
     Blueprint,
@@ -54,11 +22,9 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
-from theatre.new_db import Database, FileRec, DirRec, ClassDetailRec, ClassPropRec
+from theatre.new_db import Database, FileRec, DirRec, ClassDetailRec, ClassPropRec, ClassRec, PropertyType
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
-
-from theatre.db import delete_class
 
 bp = Blueprint("api", __name__, url_prefix="")
 
@@ -448,14 +414,14 @@ def new_object_endpoint():
     cover_id: Optional[int] = form["directory_id"]
     property_values: dict = form["values"]
     # If an object with this title exists, reject it
-    conn: Connection = get_db()
-    if get_object_by_title(conn, title) is not None:
+    db: Database = get_db()
+    if db.get_object_by_title(title) is not None:
         raise CTError(
             "Duplicate Title",
             f"An object with the title '{title}' already exists.",
         )
     # Find the class
-    cls: Optional[ClassRec] = get_class(conn, class_id)
+    cls: Optional[ClassRec] = db.get_class(class_id)
     if cls is None:
         raise CTError(
             "Class Not Found",
@@ -464,13 +430,13 @@ def new_object_endpoint():
 
     # Find the directory, if any
     if directory_id is not None:
-        if not directory_exists(conn, directory_id):
+        if not db.directory_exists(directory_id):
             raise CTError(
                 "Directory Not Found",
                 f"The directory with the ID '{id}' was not found in the database.",
             )
     # Find the set of class properties
-    cls_props: List[ClassPropertyRec] = get_class_properties(conn, class_id)
+    cls_props: List[ClassPropRec] = db.get_class_properties(class_id)
     # Check: the dictionary of values provided by the client has all the keys we expect
     input_keys: Set[str] = set(property_values.keys())
     expected_keys: Set[str] = set([prop.title for prop in cls_props])
@@ -486,8 +452,7 @@ def new_object_endpoint():
         effective_icon_emoji = cls.icon_emoji
     # Create the object
     created_at: int = now_millis()
-    object_id: int = create_object(
-        conn=conn,
+    object_id: int = db.create_object(
         title=title,
         class_id=class_id,
         directory_id=directory_id,
@@ -499,19 +464,21 @@ def new_object_endpoint():
     # Create the properties
     for prop_title, prop_value in property_values.items():
         # Find the corresponding class property
-        cls_prop: ClassPropertyRec = [
+        cls_prop: ClassPropRec = [
             prop for prop in cls_props if prop.title == prop_title
         ][0]
-        # Dispatch on the type of the class property
-        value_text: Optional[str]
-        value_file: Optional[int]
+        # These variables store the property's value
+        value_text: str | None = None
+        value_file: int | None = None
+        value_bool: bool | None = None
+        value_select: str | None = None
+        value_link: int | None = None
+        value_links: List[int] | None = None
+        # This stores the set of links we have to create from this property.
         create_link_set: Set[str] = set()
-        if cls_prop.type == PropertyType.PROP_RICH_TEXT:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+        # Dispatch on the type of the class property
+        if prop_value is not None:
+            if cls_prop.type == PropertyType.PROP_RICH_TEXT:
                 assert isinstance(prop_value, str)
                 # The value should be a JSON string of a ProseMirror document.
                 doc: CTDocument = parse_document(json.loads(prop_value))
@@ -520,34 +487,48 @@ def new_object_endpoint():
                 json_string: str = json.dumps(json_value)
                 # Set the values
                 value_text = json_string
-                value_file = None
                 # Find the set of links to create
                 create_link_set: Set[str] = extract_links(doc)
-        elif cls_prop.type == PropertyType.PROP_FILE:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+            elif cls_prop.type == PropertyType.PROP_FILE:
                 # The value should be an integer ID of a file.
                 assert isinstance(prop_value, int)
                 # Find the file with this ID
-                if not file_exists(conn, prop_value):
+                if not db.file_exists(prop_value):
                     raise CTError(
                         "File Not Found",
                         f"The file with the ID '{prop_value}' was not found in the database.",
                     )
                 # Set the values
-                value_text = None
                 value_file = prop_value
-        else:
-            raise CTError(
-                "Unknown Property Type",
-                f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
-            )
+            elif cls_prop.type == PropertyType.PROP_BOOLEAN:
+                # The value should be a boolean value.
+                assert isinstance(prop_value, bool)
+                # Set the value
+                value_bool = prop_value
+            elif cls_prop.type == PropertyType.PROP_SELECT:
+                # The value should be a string value.
+                assert isinstance(prop_value, str)
+                # The value should be part of the class property's select list
+                if not prop_value in cls_prop.select_options:
+                    raise CTError(
+                        "Invalid Option",
+                        f"The string '{prop_value}' is not part of the valid options for this property.",
+                    )
+                # Set the value
+                value_select = prop_value
+            elif cls_prop.type == PropertyType.PROP_LINK:
+                # The value should be the title of an object.
+                assert isinstance(prop_value, int)
+                
+
+            elif cls_prop.type == PropertyType.PROP_LINKS:
+            else:
+                raise CTError(
+                    "Unknown Property Type",
+                    f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
+                )
         # Create the property in the database, and the initial property change object.
-        prop_id: int = create_property(
-            conn=conn,
+        prop_id: int = db.create_property(
             class_prop_id=cls_prop.id,
             class_prop_title=prop_title,
             class_prop_type=cls_prop.type,
@@ -555,8 +536,7 @@ def new_object_endpoint():
             value_text=value_text,
             value_file=value_file,
         )
-        create_property_change(
-            conn=conn,
+        db.create_property_change(
             object_id=object_id,
             prop_id=prop_id,
             prop_title=prop_title,
@@ -566,10 +546,9 @@ def new_object_endpoint():
         )
         # Create links from this property to other objects
         for link_title in create_link_set:
-            links_to: Optional[ObjectRec] = get_object_by_title(conn, link_title)
+            links_to: Optional[ObjectRec] = db.get_object_by_title(link_title)
             if links_to is not None:
-                create_link(
-                    conn=conn,
+                db.create_link(
                     from_object_id=object_id,
                     from_property_id=prop_id,
                     to_object_id=links_to.id,

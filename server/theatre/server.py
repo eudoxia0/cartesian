@@ -347,8 +347,8 @@ def get_class_properties_endpoint(cls_id: int):
 
 @bp.route("/api/classes/<int:cls_id>/properties", methods=["POST"])
 def new_class_property_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if not class_exists(conn, cls_id):
+    db: Database = get_db()
+    if not db.class_exists(cls_id):
         raise CTError(
             "Class Not Found",
             f"The class with the ID '{cls_id}' was not found in the database.",
@@ -358,12 +358,13 @@ def new_class_property_endpoint(cls_id: int):
         title: str = form["title"].strip()
         prop_ty: PropertyType = PropertyType(form["type"])
         description: str = form["description"].strip()
-        rec: ClassPropertyRec = create_class_property(
-            conn=conn,
+        select_options: List[str] = form["select_options"].trim().split(",")
+        rec: ClassPropRec = db.create_class_property(
             class_id=cls_id,
             title=title,
             prop_type=prop_ty,
             description=description,
+            select_options=select_options,
         )
         return {
             "error": None,

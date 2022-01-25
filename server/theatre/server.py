@@ -59,7 +59,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
-from theatre.new_db import Database, FileRec
+from theatre.new_db import Database, FileRec, DirRec
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
@@ -167,58 +167,18 @@ def delete_file(file_id: int):
 
 @bp.route("/api/directories", methods=["GET"])
 def list_directories():
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            id, title, icon_emoji, parent_id, created_at
-        from
-            directories;
-        """
-    ).fetchall()
     return {
         "error": None,
-        "data": [
-            {
-                "id": row["id"],
-                "title": row["title"],
-                "icon_emoji": row["icon_emoji"],
-                "parent_id": row["parent_id"],
-                "created_at": row["created_at"],
-            }
-            for row in results
-        ],
+        "data": [rec.to_json() for rec in get_db().list_directories()],
     }
 
 
 @bp.route("/api/directories/<int:dir_id>", methods=["GET"])
 def get_directory(dir_id: int):
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            title, icon_emoji, parent_id, created_at
-        from
-            directories;
-        where
-            id = :id;
-        """,
-        {
-            "id": dir_id,
-        },
-    ).fetchall()
-    if results:
-        row = results[0]
+    dir: DirRec | None = get_db().get_directory(dir_id)
+    if dir is not None:
         return {
-            "data": {
-                "id": dir_id,
-                "title": row["title"],
-                "icon_emoji": row["icon_emoji"],
-                "parent_id": row["parent_id"],
-                "created_at": row["created_at"],
-            },
+            "data": dir.to_json(),
             "error": None,
         }
     else:
@@ -234,41 +194,32 @@ def new_directory():
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
     parent_id: Optional[int] = form["parent_id"]
-    db = get_db()
-    cur = db.cursor()
+    db: Database = get_db()
     if parent_id:
-        if not directory_exists(db, parent_id):
+        if not db.directory_exists(parent_id):
             raise CTError(
                 "Directory Not Found",
                 f"The directory with the ID '{parent_id}' was not found in the database.",
             )
     created_at: int = now_millis()
-    results = cur.execute(
-        """
-        insert into directories
-            (title, icon_emoji, parent_id, created_at)
-        values
-            (:title, :icon_emoji, :parent_id, :created_at)
-        returning id;
-        """,
-        {
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "created_at": created_at,
-        },
+    dir_id: int = db.create_directory(
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
+        created_at=created_at,
     )
-    dir_id: int = list(results)[0][0]
-    db.commit()
-    # Return file data
+    dir: DirRec = DirRec(
+        id=dir_id,
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
+        created_at=created_at,
+    )
+    # Return directory data
     return {
-        "data": {
-            "id": dir_id,
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "created_at": created_at,
-        },
+        "data": dir.to_json(),
         "error": None,
     }
 
@@ -279,61 +230,32 @@ def edit_directory(dir_id: int):
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
     parent_id: Optional[int] = form["parent_id"]
-    db = get_db()
-    cur = db.cursor()
+    db: Database = get_db()
     if parent_id:
-        if not directory_exists(db, parent_id):
+        if not db.directory_exists(parent_id):
             raise CTError(
                 "Directory Not Found",
                 f"The directory with the ID '{parent_id}' was not found in the database.",
             )
-    cur.execute(
-        """
-        update directories
-        set
-            title = :title,
-            icon_emoji = :icon_emoji,
-            parent_id = :parent_id
-        where
-            id = :id;
-        """,
-        {
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "id": dir_id,
-        },
+    db.edit_directory(
+        dir_id=dir_id,
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
     )
-    db.commit()
     # Return directory data
     return {
-        "data": {
-            "id": dir_id,
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-        },
+        "data": db.get_directory(dir_id).to_json(),
         "error": None,
     }
 
 
 @bp.route("/api/directories/<int:dir_id>", methods=["DELETE"])
 def delete_directory(dir_id: int):
-    db = get_db()
-    cur = db.cursor()
-    if directory_exists(db, dir_id):
-        cur.execute(
-            """
-            delete from
-                directories
-            where
-                id = :id
-            """,
-            {
-                "id": dir_id,
-            },
-        )
-        db.commit()
+    db: Database = get_db()
+    if db.directory_exists(dir_id):
+        db.delete_directory(dir_id)
         return {
             "data": True,
             "error": None,
@@ -349,8 +271,7 @@ def delete_directory(dir_id: int):
 def list_objects_in_directory_endpoint(dir_id: int):
     return {
         "data": [
-            obj.to_json()
-            for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)
+            obj.to_json() for obj in get_db().list_objects_in_directory(dir_id=dir_id)
         ],
         "error": None,
     }
@@ -359,7 +280,7 @@ def list_objects_in_directory_endpoint(dir_id: int):
 @bp.route("/api/uncategorized-objects", methods=["GET"])
 def list_uncategorized_objects_endpoint():
     return {
-        "data": [obj.to_json() for obj in list_uncategorized_objects(conn=get_db())],
+        "data": [obj.to_json() for obj in get_db().list_uncategorized_objects()],
         "error": None,
     }
 

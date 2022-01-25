@@ -411,18 +411,18 @@ def delete_class_endpoint(cls_id: int):
 
 @bp.route("/api/classes/<int:cls_id>", methods=["POST"])
 def update_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if class_exists(conn, cls_id):
+    db: Database = get_db()
+    if db.class_exists(cls_id):
         form: dict = request.json
         title: str = form["title"].strip()
         icon_emoji: str = form["icon_emoji"].strip()
-        rec: ClassRec = update_class(
-            conn=conn, cls_id=cls_id, new_title=title, new_icon_emoji=icon_emoji
+        rec: ClassRec = db.update_class(
+            cls_id=cls_id, new_title=title, new_icon_emoji=icon_emoji
         )
-        obj = rec.to_json()
-        obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
         return {
-            "data": obj,
+            "data": ClassDetailRec(
+                cls=rec, props=db.get_class_properties(rec.id)
+            ).to_json,
             "error": None,
         }
     else:

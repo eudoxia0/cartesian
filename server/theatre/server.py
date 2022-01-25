@@ -7,7 +7,7 @@ from datetime import datetime
 import tempfile
 import hashlib
 import subprocess
-from sqlite3 import Connection, Cursor
+from sqlite3 import Connection
 from typing import Optional, List, Set, Tuple
 
 from flask import make_response, Response, current_app, g
@@ -15,8 +15,6 @@ from theatre.error import CTError
 from theatre.extract_links import extract_links
 from theatre.flask_db import get_db
 from theatre.db import (
-    get_tex_macros,
-    set_tex_macros,
     directory_exists,
     list_classes,
     get_class,
@@ -27,7 +25,6 @@ from theatre.db import (
     create_class_property,
     PropertyType,
     file_exists,
-    create_file,
     ClassRec,
     get_object_by_title,
     create_object,
@@ -44,8 +41,6 @@ from theatre.db import (
     update_object,
     class_property_exists,
     delete_class_property,
-    list_objects_in_directory,
-    list_uncategorized_objects,
     update_class,
     get_links_to_object,
     delete_object,

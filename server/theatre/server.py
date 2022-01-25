@@ -248,6 +248,7 @@ def edit_directory(dir_id: int):
 
 @bp.route("/api/directories/<int:dir_id>", methods=["DELETE"])
 def delete_directory(dir_id: int):
+    db: Database = get_db()
     if db.directory_exists(dir_id):
         db.delete_directory(dir_id)
         return {

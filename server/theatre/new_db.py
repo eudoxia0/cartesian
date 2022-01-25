@@ -81,6 +81,16 @@ class DirRec:
     parent_id: int | None
     created_at: int
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "icon_emoji": self.icon_emoji,
+            "cover_id": self.cover_id,
+            "parent_id": self.parent_id,
+            "created_at": self.created_at,
+        }
+
 
 @dataclass(frozen=True)
 class ClassRec:

@@ -292,7 +292,7 @@ class Database(object):
             """,
             {
                 "id": file_id,
-            }
+            },
         ).fetchall()
         if rows:
             row: Row = rows[0]
@@ -323,7 +323,7 @@ class Database(object):
             """,
             {
                 "id": file_id,
-            }
+            },
         ).fetchall()
         if rows:
             row: Row = rows[0]
@@ -1295,7 +1295,9 @@ class Database(object):
         self.conn.commit()
         return link_id
 
-    def get_dangling_links_to_title(self, to_object_title: str) -> List[DanglingLinkRec]:
+    def get_dangling_links_to_title(
+        self, to_object_title: str
+    ) -> List[DanglingLinkRec]:
         """
         Retrieve dangling links to an object with the given title.
         """

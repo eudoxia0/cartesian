@@ -127,6 +127,21 @@ class ClassPropRec:
 
 
 @dataclass(frozen=True)
+class ClassDetailRec:
+    """
+    Represents a class plus its property map.
+    """
+
+    cls: ClassRec
+    props: List[ClassPropRec]
+
+    def to_json(self) -> dict:
+        d: dict = self.cls.to_json()
+        d["properties"] = [p.to_json() for p in self.props]
+        return d
+
+
+@dataclass(frozen=True)
 class ObjectRec:
     id: int
     title: str

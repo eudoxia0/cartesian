@@ -54,7 +54,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
-from theatre.new_db import Database, FileRec, DirRec
+from theatre.new_db import Database, FileRec, DirRec, ClassDetailRec
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
@@ -248,7 +248,6 @@ def edit_directory(dir_id: int):
 
 @bp.route("/api/directories/<int:dir_id>", methods=["DELETE"])
 def delete_directory(dir_id: int):
-    db: Database = get_db()
     if db.directory_exists(dir_id):
         db.delete_directory(dir_id)
         return {
@@ -287,14 +286,14 @@ def list_uncategorized_objects_endpoint():
 
 @bp.route("/api/classes", methods=["GET"])
 def list_classes_endpoint():
-    conn: Connection = get_db()
-    records: List[ClassRec] = list_classes(conn)
-    jsons: List[dict] = [rec.to_json() for rec in records]
-    for rec in jsons:
-        rec["properties"] = [p.to_json() for p in get_class_properties(conn, rec["id"])]
+    db: Database = get_db()
+    details: List[ClassDetailRec] = [
+        ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id))
+        for cls in db.list_classes()
+    ]
     return {
         "error": None,
-        "data": jsons,
+        "data": [d.to_json() for d in details],
     }
 
 

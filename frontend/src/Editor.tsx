@@ -2,7 +2,7 @@ import { useProseMirror, ProseMirror } from 'use-prosemirror';
 import { schema, plugins } from "./prosemirror";
 import { Fragment, Node, Slice } from "prosemirror-model";
 
-const HTTP_LINK_REGEX = /\bhttps?:\/\/[\w_\/\.]+/g
+const HTTP_LINK_REGEX = /\bhttps?:\/\/[\w_\-#\/\.]+/g
 let linkify = function (fragment: Fragment): Fragment {
     var linkified: Node[] = []
     fragment.forEach(function (child: Node) {

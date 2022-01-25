@@ -1151,6 +1151,38 @@ class Database(object):
         ]
 
     #
+    # Dangling link methods
+    #
+
+    def create_dangling_link(
+        self,
+        from_object_id: int,
+        from_property_id: int,
+        to_object_title: str,
+    ) -> id:
+        """
+        Create a dangling link.
+        """
+        cur: Cursor = self.conn.cursor()
+        cur.execute(
+            """
+            insert into dangling_links
+                (from_object_id, from_property_id, to_object_title)
+            values
+                (:from_object_id, :from_property_id, :to_object_title)
+            returning id;
+            """,
+            {
+                "from_object_id": from_object_id,
+                "from_property_id": from_property_id,
+                "to_object_title": to_object_title,
+            },
+        )
+        link_id: int = list(cur)[0][0]
+        self.conn.commit()
+        return link_id
+
+    #
     # Search methods
     #
 

@@ -316,6 +316,24 @@ class Database(object):
         else:
             return None
 
+    def delete_file(self, file_id: int):
+        """
+        Delete a file.
+        """
+        cur: Cursor = self.conn.cursor()
+        cur.execute(
+            """
+            delete from
+                files
+            where
+                id = :file_id;
+            """,
+            {
+                "file_id": file_id,
+            },
+        )
+        self.conn.commit()
+
     #
     # Directory methods
     #

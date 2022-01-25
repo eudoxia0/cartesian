@@ -784,7 +784,7 @@ def object_search_endpoint():
     query: str = form["query"].strip()
     # Return results
     return {
-        "data": [obj.to_json() for obj in search_objects(conn=get_db(), query=query)],
+        "data": [obj.to_json() for obj in get_db().search_objects(query=query)],
         "error": None,
     }
 

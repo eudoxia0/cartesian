@@ -595,7 +595,7 @@ def new_object_endpoint():
 def list_objects_endpoint():
     return {
         "error": None,
-        "data": [obj.to_json() for obj in list_objects(get_db())],
+        "data": [obj.to_json() for obj in get_db().list_objects()],
     }
 
 

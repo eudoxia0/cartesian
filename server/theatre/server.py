@@ -283,7 +283,7 @@ def new_class_endpoint():
     db: Database = get_db()
     cls: ClassRec = db.create_class(title=title, icon_emoji=icon_emoji)
     return {
-        "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json,
+        "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
         "error": None,
     }
 
@@ -366,7 +366,7 @@ def update_class_endpoint(cls_id: int):
         return {
             "data": ClassDetailRec(
                 cls=rec, props=db.get_class_properties(rec.id)
-            ).to_json,
+            ).to_json(),
             "error": None,
         }
     else:

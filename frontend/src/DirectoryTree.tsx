@@ -181,8 +181,6 @@ export default function DirectoryTree() {
     function handleDeleteDirectory(dirId: number) {
         setShowEdit(false);
         const dir = editDir!;
-        const newTitle = editTitle;
-        const newEmoji = editEmoji;
         setEditDir(null);
         setEditTitle("");
         setEditEmoji("");

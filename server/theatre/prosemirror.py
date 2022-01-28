@@ -2,7 +2,7 @@
 This module contains code to map the text model to and from ProseMirror JSON.
 """
 from theatre.error import CTError
-from theatre.new_text import *
+from theatre.text import *
 
 #
 # Parsing from JSON

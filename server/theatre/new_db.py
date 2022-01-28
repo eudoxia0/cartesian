@@ -7,7 +7,7 @@ from enum import Enum
 from typing import List, Iterable, Dict, Tuple, Set
 from sqlite3 import Connection, Cursor, Row, connect
 
-from theatre.new_text import CTDocument
+from theatre.text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 from theatre.rename_link import rename_link
 

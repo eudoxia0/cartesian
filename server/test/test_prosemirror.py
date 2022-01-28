@@ -1,5 +1,5 @@
 import unittest
-from theatre.new_text import *
+from theatre.text import *
 from theatre.prosemirror import parse_document, emit_document
 
 doc_dump = {

@@ -2,7 +2,7 @@
 Code to rename links in a document.
 """
 from theatre.error import CTError
-from theatre.new_text import *
+from theatre.text import *
 
 
 def rename_link(doc: CTDocument, old_title: str, new_title: str) -> CTDocument:

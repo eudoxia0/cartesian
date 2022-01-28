@@ -4,7 +4,7 @@ Code to extract wiki links from a document.
 from typing import Optional, Set
 
 from theatre.error import CTError
-from theatre.new_text import *
+from theatre.text import *
 
 
 def extract_links(doc: CTDocument) -> Set[str]:

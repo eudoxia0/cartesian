@@ -40,7 +40,7 @@ from theatre.new_db import (
     PropRec,
     ObjectDetailRec,
 )
-from theatre.new_text import CTDocument
+from theatre.text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
 bp = Blueprint("api", __name__, url_prefix="")

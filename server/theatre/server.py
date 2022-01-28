@@ -629,15 +629,11 @@ def edit_object_endpoint(title: str):
                 f"Can't edit a property that does not exist: '{prop_title}', which has type '{cls_prop.type}'.",
             )
         # Dispatch on the type of the class property
-        value_integer: int | None
-        value_text: Optional[str]
+        value_integer: int | None = None
+        value_text: str | None = None
         create_link_set: Set[str] = set()
-        if cls_prop.type == PropertyType.PROP_RICH_TEXT:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+        if prop_value is not None:
+            if cls_prop.type == PropertyType.PROP_RICH_TEXT:
                 assert isinstance(prop_value, str)
                 # The value should be a JSON string of a ProseMirror document.
                 doc: CTDocument = parse_document(json.loads(prop_value))
@@ -646,43 +642,73 @@ def edit_object_endpoint(title: str):
                 json_string: str = json.dumps(json_value)
                 # Set the values
                 value_text = json_string
-                value_file = None
                 create_link_set = extract_links(doc)
-        elif cls_prop.type == PropertyType.PROP_FILE:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+            elif cls_prop.type == PropertyType.PROP_FILE:
                 # The value should be an integer ID of a file.
                 assert isinstance(prop_value, int)
                 # Find the file with this ID
-                if not file_exists(conn, prop_value):
+                if not db.file_exists(prop_value):
                     raise file_not_found(prop_value)
                 # Set the values
-                value_text = None
                 value_file = prop_value
-        else:
-            raise CTError(
-                "Unknown Property Type",
-                f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
-            )
+            elif cls_prop.type == PropertyType.PROP_BOOLEAN:
+                # The value should be a boolean value.
+                assert isinstance(prop_value, bool)
+                # Set the value
+                value_integer = int(prop_value)
+            elif cls_prop.type == PropertyType.PROP_SELECT:
+                # The value should be a string value.
+                assert isinstance(prop_value, str)
+                # The value should be part of the class property's select list
+                if not prop_value in cls_prop.select_options:
+                    raise CTError(
+                        "Invalid Option",
+                        f"The string '{prop_value}' is not part of the valid options for this property.",
+                    )
+                # Set the value
+                value_text = prop_value
+            elif cls_prop.type == PropertyType.PROP_LINK:
+                # The value should be the title of an object.
+                assert isinstance(prop_value, str)
+                linked_title: str = prop_value
+                linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                if linked_obj is not None:
+                    value_text = linked_title
+                    create_link_set = {linked_title}
+                else:
+                    # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                    raise object_not_found(linked_title)
+            elif cls_prop.type == PropertyType.PROP_LINKS:
+                # The value should be an array of object titles
+                assert isinstance(prop_value, list)
+                linked_titles: Set[str] = set(prop_value)
+                for linked_title in linked_titles:
+                    assert isinstance(linked_titles, str)
+                    linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                    if linked_obj is None:
+                        # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                        raise object_not_found(linked_title)
+                value_text = ";".join(list(linked_titles))
+                create_link_set = linked_titles
+            else:
+                raise CTError(
+                    "Unknown Property Type",
+                    f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
+                )
         # Edit the property
-        edit_property(
-            conn=conn,
+        db.edit_property(
             property_id=existing_prop.id,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
         # Create the property change
-        create_property_change(
-            conn=conn,
+        db.create_property_change(
             object_id=obj.id,
             prop_id=existing_prop.id,
             prop_title=prop_title,
             created_at=modified_at,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
         # Delete old links from this property to any other object
         db.delete_links_from(property_id=existing_prop.id)

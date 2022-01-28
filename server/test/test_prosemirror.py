@@ -3,95 +3,93 @@ from theatre.new_text import *
 from theatre.prosemirror import parse_document, emit_document
 
 doc_dump = {
-    "doc": {
-        "type": "doc",
-        "content": [
-            {
-                "type": "paragraph",
-                "content": [
-                    {"type": "text", "text": "Paragraph. "},
-                    {"type": "text", "marks": [{"type": "strong"}], "text": "Bold"},
-                    {"type": "text", "text": ". "},
-                    {"type": "text", "marks": [{"type": "em"}], "text": "Italics"},
-                    {"type": "text", "text": ". Wiki link: "},
-                    {"type": "wikilinknode", "attrs": {"title": "Node"}},
-                    {"type": "text", "text": ". "},
-                    {
-                        "type": "math_inline",
-                        "content": [{"type": "text", "text": "math"}],
-                    },
-                    {"type": "text", "text": "."},
-                ],
-            },
-            {
-                "type": "bullet_list",
-                "content": [
-                    {
-                        "type": "list_item",
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [{"type": "text", "text": "item"}],
-                            },
-                            {
-                                "type": "bullet_list",
-                                "content": [
-                                    {
-                                        "type": "list_item",
-                                        "content": [
-                                            {
-                                                "type": "paragraph",
-                                                "content": [
-                                                    {"type": "text", "text": "item"}
-                                                ],
-                                            }
-                                        ],
-                                    }
-                                ],
-                            },
-                        ],
-                    }
-                ],
-            },
-            {
-                "type": "ordered_list",
-                "attrs": {"order": 1},
-                "content": [
-                    {
-                        "type": "list_item",
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [{"type": "text", "text": "item"}],
-                            },
-                            {
-                                "type": "ordered_list",
-                                "attrs": {"order": 1},
-                                "content": [
-                                    {
-                                        "type": "list_item",
-                                        "content": [
-                                            {
-                                                "type": "paragraph",
-                                                "content": [
-                                                    {"type": "text", "text": "item"}
-                                                ],
-                                            }
-                                        ],
-                                    }
-                                ],
-                            },
-                        ],
-                    }
-                ],
-            },
-            {"type": "horizontal_rule"},
-            {"type": "paragraph", "content": [{"type": "text", "text": "Paragraph"}]},
-            {"type": "code_block", "content": [{"type": "text", "text": "code block"}]},
-            {"type": "paragraph", "content": [{"type": "text", "text": "Paragraph"}]},
-            {"type": "math_display", "content": [{"type": "text", "text": "e=mc^2"}]},
-        ],
-    }
+    "type": "doc",
+    "content": [
+        {
+            "type": "paragraph",
+            "content": [
+                {"type": "text", "text": "Paragraph. "},
+                {"type": "text", "marks": [{"type": "strong"}], "text": "Bold"},
+                {"type": "text", "text": ". "},
+                {"type": "text", "marks": [{"type": "em"}], "text": "Italics"},
+                {"type": "text", "text": ". Wiki link: "},
+                {"type": "wikilinknode", "attrs": {"title": "Node"}},
+                {"type": "text", "text": ". "},
+                {
+                    "type": "math_inline",
+                    "content": [{"type": "text", "text": "math"}],
+                },
+                {"type": "text", "text": "."},
+            ],
+        },
+        {
+            "type": "bullet_list",
+            "content": [
+                {
+                    "type": "list_item",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [{"type": "text", "text": "item"}],
+                        },
+                        {
+                            "type": "bullet_list",
+                            "content": [
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {"type": "text", "text": "item"}
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+        },
+        {
+            "type": "ordered_list",
+            "attrs": {"order": 1},
+            "content": [
+                {
+                    "type": "list_item",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [{"type": "text", "text": "item"}],
+                        },
+                        {
+                            "type": "ordered_list",
+                            "attrs": {"order": 1},
+                            "content": [
+                                {
+                                    "type": "list_item",
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {"type": "text", "text": "item"}
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+        },
+        {"type": "horizontal_rule"},
+        {"type": "paragraph", "content": [{"type": "text", "text": "Paragraph"}]},
+        {"type": "code_block", "content": [{"type": "text", "text": "code block"}]},
+        {"type": "paragraph", "content": [{"type": "text", "text": "Paragraph"}]},
+        {"type": "math_display", "content": [{"type": "text", "text": "e=mc^2"}]},
+    ],
 }
 
 

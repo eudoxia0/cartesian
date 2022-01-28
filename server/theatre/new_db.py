@@ -1612,6 +1612,24 @@ class Database(object):
             for row in rows
         ]
 
+    def delete_dangling_link(self, link_id: int):
+        """
+        Delete a dangling link.
+        """
+        cur: Cursor = self.conn.cursor()
+        cur.execute(
+            """
+            delete from
+                dangling_links
+            where
+                id = :link_id
+            """,
+            {
+                "link_id": link_id,
+            },
+        )
+        self.conn.commit()
+
     #
     # Search methods
     #

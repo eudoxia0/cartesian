@@ -727,6 +727,12 @@ def edit_object_endpoint(title: str):
                     from_property_id=existing_prop.id,
                     to_object_id=links_to.id,
                 )
+            else:
+                db.create_dangling_link(
+                    from_object_id=obj.id,
+                    from_property_id=existing_prop.id,
+                    to_object_title=link_title,
+                )
     # Return
     obj: Optional[ObjectRec] = db.get_object_by_title(new_title)
     assert obj is not None

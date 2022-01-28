@@ -681,7 +681,7 @@ class Database(object):
         if rows:
             row = rows[0]
             return DirRec(
-                id=row["id"],
+                id=dir_id,
                 title=row["title"],
                 icon_emoji=row["icon_emoji"],
                 cover_id=row["cover_id"],

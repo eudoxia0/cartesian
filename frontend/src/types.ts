@@ -26,7 +26,9 @@ export interface DirectoryRec {
     id: number;
     title: string;
     icon_emoji: string;
+    cover_id: number | null;
     parent_id: number | null;
+    created_at: number;
 }
 
 export interface ObjectSummaryRec {

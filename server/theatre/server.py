@@ -868,16 +868,3 @@ def determine_mime_type(blob: bytes) -> str:
     # Close the stream, deleting the file.
     stream.close()
     return mime_type
-
-
-def get_query_param(req, name: str) -> str:
-    try:
-        value = req.args.get(name).strip()
-        assert isinstance(value, str)
-        assert len(value.strip()) > 0
-        return value
-    except Exception:
-        raise CTError(
-            "Bad Request",
-            f"Missing '{name}' query parameter when trying to upload a file.",
-        )

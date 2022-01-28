@@ -266,7 +266,9 @@ def get_class_endpoint(cls_id: int):
     cls: ClassRec | None = db.get_class(cls_id)
     if cls is not None:
         return {
-            "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
+            "data": ClassDetailRec(
+                cls=cls, props=db.get_class_properties(cls.id)
+            ).to_json(),
             "error": None,
         }
     else:
@@ -283,7 +285,9 @@ def new_class_endpoint():
     db: Database = get_db()
     cls: ClassRec = db.create_class(title=title, icon_emoji=icon_emoji)
     return {
-        "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
+        "data": ClassDetailRec(
+            cls=cls, props=db.get_class_properties(cls.id)
+        ).to_json(),
         "error": None,
     }
 

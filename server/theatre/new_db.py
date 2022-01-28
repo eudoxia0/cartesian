@@ -183,7 +183,7 @@ class PropRec:
             "object_id": self.object_id,
             "class_prop_id": self.class_prop_id,
             "class_prop_title": self.class_prop_title,
-            "class_prop_type": self.class_prop_type,
+            "class_prop_type": self.class_prop_type.value,
             "value": self._value_json(),
         }
 
@@ -1427,7 +1427,7 @@ class Database(object):
             insert into property_changes
                 (object_id, prop_id, prop_title, created_at, value_integer, value_text)
             values
-                (:object_id, :prop_id, :prop_title, :created_at, :value_integer, :value_text,)
+                (:object_id, :prop_id, :prop_title, :created_at, :value_integer, :value_text)
             returning id;
             """,
             {

@@ -541,6 +541,16 @@ def new_object_endpoint():
                     from_property_id=prop_id,
                     to_object_title=link_title,
                 )
+    # If there are any dangling links to this object, delete them and replace them with real links.
+    for link in db.get_dangling_links_to_title(to_object_title=title):
+        # Create the actual link
+        db.create_link(
+            from_object_id=link.from_object_id,
+            from_property_id=link.from_property_id,
+            to_object_id=object_id,
+        )
+        # Delete the dangling link
+        db.delete_dangling_link(link.id)
     # Return
     obj: ObjectRec = ObjectRec(
         id=object_id,

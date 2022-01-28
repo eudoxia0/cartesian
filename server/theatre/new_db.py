@@ -4,8 +4,10 @@ This module implements the persistence layer.
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Iterable, Dict, Tuple
+from typing import List, Iterable, Dict, Tuple, Set
 from sqlite3 import Connection, Cursor, Row, connect
+
+from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 from theatre.rename_link import rename_link
 
@@ -168,17 +170,155 @@ class ObjectRec:
 @dataclass(frozen=True)
 class PropRec:
     id: int
+    object_id: int
     class_prop_id: int
     class_prop_title: str
     class_prop_type: PropertyType
-    object_id: int
-
+    value_integer: int | None
     value_text: str | None
-    value_file: int | None
-    value_bool: bool | None
-    value_select: str | None
-    value_link: int | None
-    value_links: List[int] | None
+
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "object_id": self.object_id,
+            "class_prop_id": self.class_prop_id,
+            "class_prop_title": self.class_prop_title,
+            "class_prop_type": self.class_prop_type,
+            "value_integer": self.value_integer,
+            "value_text": self.value_text,
+        }
+
+
+class BaseProperty(object):
+    """
+    Base class of property values.
+    """
+
+    id: int
+    object_id: int
+    class_prop_id: int
+    class_prop_title: str
+    class_prop_type: PropertyType
+
+
+class RichTextProperty(BaseProperty):
+    doc: CTDocument
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        doc: CTDocument,
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.doc = doc
+
+
+class FileProperty(BaseProperty):
+    file_id: int
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        file_id: int,
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.file_id = file_id
+
+
+class BooleanProperty(BaseProperty):
+    value: bool
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        value: bool,
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.value = value
+
+
+class SelectProperty(BaseProperty):
+    option: str
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        option: str,
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.option = option
+
+
+class LinkProperty(BaseProperty):
+    title: str
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        title: str,
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.title = title
+
+
+class LinksProperty(BaseProperty):
+    titles: Set[str]
+
+    def __init__(
+        self,
+        prop_id: int,
+        object_id: int,
+        class_prop_id: int,
+        class_prop_title: str,
+        class_prop_type: PropertyType,
+        titles: Set[str],
+    ):
+        self.id = prop_id
+        self.object_id = object_id
+        self.class_prop_id = class_prop_id
+        self.class_prop_title = class_prop_title
+        self.class_prop_type = class_prop_type
+        self.titles = titles
 
 
 @dataclass(frozen=True)
@@ -189,12 +329,8 @@ class PropChangeRec:
     prop_title: str
     created_at: int
 
+    value_integer: int | None
     value_text: str | None
-    value_file: int | None
-    value_bool: bool | None
-    value_select: str | None
-    value_link: int | None
-    value_links: List[int] | None
 
 
 @dataclass(frozen=True)
@@ -225,6 +361,23 @@ class LinkRepr:
         return {
             "title": self.title,
         }
+
+
+@dataclass(frozen=True)
+class ObjectDetailRec:
+    """
+    Represents an object together with its property map and links.
+    """
+
+    obj: ObjectRec
+    props: List[PropRec]
+    links: List[LinkRepr]
+
+    def to_json(self) -> dict:
+        d: dict = self.obj.to_json()
+        d["properties"] = [p.to_json() for p in self.props]
+        d["links"] = [l.to_json() for l in self.links]
+        return d
 
 
 #
@@ -1024,24 +1177,16 @@ class Database(object):
                     new_value_text: str = json.dumps(json_value)
                     self.edit_property(
                         property_id=prop.id,
+                        value_integer=prop.value_integer,
                         value_text=new_value_text,
-                        value_file=prop.value_file,
-                        value_bool=prop.value_bool,
-                        value_select=prop.value_select,
-                        value_link=prop.value_link,
-                        value_links=prop.value_links,
                     )
                     self.create_property_change(
                         object_id=obj.id,
                         prop_id=prop.id,
                         prop_title=prop.class_prop_title,
                         created_at=modified_at,
+                        value_integer=prop.value_integer,
                         value_text=new_value_text,
-                        value_file=prop.value_file,
-                        value_bool=prop.value_bool,
-                        value_select=prop.value_select,
-                        value_link=prop.value_link,
-                        value_links=prop.value_links,
                     )
 
     #
@@ -1063,12 +1208,8 @@ class Database(object):
                 class_prop_id,
                 class_prop_title,
                 class_prop_type,
-                value_text,
-                value_file,
-                value_bool,
-                value_select,
-                value_link,
-                value_links
+                value_integer,
+                value_text
             from
                 properties
             where
@@ -1085,16 +1226,8 @@ class Database(object):
                 class_prop_title=row["class_prop_title"],
                 class_prop_type=PropertyType.from_int(row["class_prop_type"]),
                 object_id=object_id,
+                value_integer=row["value_integer"],
                 value_text=row["value_text"],
-                value_file=row["value_file"],
-                value_bool=bool(row["value_bool"])
-                if row["value_bool"] is not None
-                else None,
-                value_select=row["value_select"],
-                value_link=row["value_link"],
-                value_links=[int(v) for v in row["value_links"].split(",")]
-                if row["value_links"] is not None
-                else None,
             )
             for row in rows
         ]
@@ -1110,12 +1243,8 @@ class Database(object):
                 id,
                 class_prop_title,
                 class_prop_type,
-                value_text,
-                value_file,
-                value_bool,
-                value_select,
-                value_link,
-                value_links
+                value_integer,
+                value_text
             from
                 properties
             where
@@ -1136,16 +1265,8 @@ class Database(object):
                 class_prop_title=row["class_prop_title"],
                 class_prop_type=PropertyType.from_int(row["class_prop_type"]),
                 object_id=object_id,
+                value_integer=row["value_integer"],
                 value_text=row["value_text"],
-                value_file=row["value_file"],
-                value_bool=bool(row["value_bool"])
-                if row["value_bool"] is not None
-                else None,
-                value_select=row["value_select"],
-                value_link=row["value_link"],
-                value_links=[int(v) for v in row["value_links"].split(",")]
-                if row["value_links"] is not None
-                else None,
             )
         else:
             return None
@@ -1162,12 +1283,8 @@ class Database(object):
                 class_prop_title,
                 class_prop_type,
                 object_id,
+                value_integer,
                 value_text,
-                value_file,
-                value_bool,
-                value_select,
-                value_link,
-                value_links
             from
                 properties
             where
@@ -1185,16 +1302,8 @@ class Database(object):
                 class_prop_title=row["class_prop_title"],
                 class_prop_type=PropertyType.from_int(row["class_prop_type"]),
                 object_id=row["object_id"],
+                value_integer=row["value_integer"],
                 value_text=row["value_text"],
-                value_file=row["value_file"],
-                value_bool=bool(row["value_bool"])
-                if row["value_bool"] is not None
-                else None,
-                value_select=row["value_select"],
-                value_link=row["value_link"],
-                value_links=[int(v) for v in row["value_links"].split(",")]
-                if row["value_links"] is not None
-                else None,
             )
         else:
             return None
@@ -1205,20 +1314,16 @@ class Database(object):
         class_prop_title: str,
         class_prop_type: PropertyType,
         object_id: int,
+        value_integer: int | None,
         value_text: str | None,
-        value_file: int | None,
-        value_bool: bool | None,
-        value_select: str | None,
-        value_link: int | None,
-        value_links: List[int] | None,
     ) -> id:
         cur: Cursor = self.conn.cursor()
         cur.execute(
             """
             insert into properties
-                (class_prop_id, class_prop_title, class_prop_type, object_id, value_text, value_file, value_bool, value_select, value_link, value_links)
+                (class_prop_id, class_prop_title, class_prop_type, object_id, value_integer, value_text)
             values
-                (:class_prop_id, :class_prop_title, :class_prop_type, :object_id, :value_text, :value_file, :value_bool, :value_select, :value_link, :value_links)
+                (:class_prop_id, :class_prop_title, :class_prop_type, :object_id, :value_integer, :value_text)
             returning id;
             """,
             {
@@ -1226,12 +1331,8 @@ class Database(object):
                 "class_prop_title": class_prop_title,
                 "class_prop_type": class_prop_type.to_int(),
                 "object_id": object_id,
+                "value_integer": value_integer,
                 "value_text": value_text,
-                "value_file": value_file,
-                "value_bool": int(value_bool),
-                "value_select": value_select,
-                "value_link": value_link,
-                "value_links": ",".join([str(l) for l in value_links]),
             },
         )
         prop_id: int = list(cur)[0][0]
@@ -1241,12 +1342,8 @@ class Database(object):
     def edit_property(
         self,
         property_id: int,
+        value_integer: int | None,
         value_text: str | None,
-        value_file: int | None,
-        value_bool: bool | None,
-        value_select: str | None,
-        value_link: int | None,
-        value_links: List[int] | None,
     ):
         cur: Cursor = self.conn.cursor()
         cur.execute(
@@ -1254,23 +1351,15 @@ class Database(object):
             update
                 properties
             set
-                value_text = :value_text,
-                value_file = :value_file,
-                value_bool = :value_bool
-                value_select = :value_select
-                value_link = :value_link
-                value_links = :value_links
+                value_integer = :value_integer,
+                value_text = :value_text
             where
                 id = :property_id;
             """,
             {
                 "property_id": property_id,
+                "value_integer": value_integer,
                 "value_text": value_text,
-                "value_file": value_file,
-                "value_bool": int(value_bool),
-                "value_select": value_select,
-                "value_link": value_link,
-                "value_links": ",".join([str(l) for l in value_links]),
             },
         )
         self.conn.commit()
@@ -1284,7 +1373,7 @@ class Database(object):
         rows: List[Row] = cur.execute(
             """
             select
-                id, object_id, prop_title, created_at, value_text, value_file
+                id, object_id, prop_title, created_at, value_integer, value_text
             from
                 property_changes
             where
@@ -1301,16 +1390,8 @@ class Database(object):
                 prop_id=prop_id,
                 prop_title=row["prop_title"],
                 created_at=row["created_at"],
+                value_integer=row["value_integer"],
                 value_text=row["value_text"],
-                value_file=row["value_file"],
-                value_bool=bool(row["value_bool"])
-                if row["value_bool"] is not None
-                else None,
-                value_select=row["value_select"],
-                value_link=row["value_link"],
-                value_links=[int(v) for v in row["value_links"].split(",")]
-                if row["value_links"] is not None
-                else None,
             )
             for row in rows
         ]
@@ -1321,20 +1402,16 @@ class Database(object):
         prop_id: int,
         prop_title: str,
         created_at: int,
+        value_integer: int | None,
         value_text: str | None,
-        value_file: int | None,
-        value_bool: bool | None,
-        value_select: str | None,
-        value_link: int | None,
-        value_links: List[int] | None,
     ) -> id:
         cur: Cursor = self.conn.cursor()
         cur.execute(
             """
             insert into property_changes
-                (object_id, prop_id, prop_title, created_at, value_text, value_file, value_bool, value_select, value_link, value_links)
+                (object_id, prop_id, prop_title, created_at, value_integer, value_text)
             values
-                (:object_id, :prop_id, :prop_title, :created_at, :value_text, :value_file, :value_bool, :value_select, :value_link, :value_links)
+                (:object_id, :prop_id, :prop_title, :created_at, :value_integer, :value_text,)
             returning id;
             """,
             {
@@ -1342,12 +1419,8 @@ class Database(object):
                 "prop_id": prop_id,
                 "prop_title": prop_title,
                 "created_at": created_at,
+                "value_integer": value_integer,
                 "value_text": value_text,
-                "value_file": value_file,
-                "value_bool": int(value_bool),
-                "value_select": value_select,
-                "value_link": value_link,
-                "value_links": ",".join([str(l) for l in value_links]),
             },
         )
         prop_change_id: int = list(cur)[0][0]

@@ -15,6 +15,7 @@ from theatre.rename_link import rename_link
 #
 # Utility types
 #
+from theatre.utils import now_millis
 
 
 class PropertyType(Enum):
@@ -189,20 +190,21 @@ class PropRec:
 
     def _value_json(self):
         if self.class_prop_type == PropertyType.PROP_RICH_TEXT:
-            assert self.value_text is not None
             return self.value_text
         elif self.class_prop_type == PropertyType.PROP_FILE:
-            assert self.value_integer is not None
             return self.value_integer
         elif self.class_prop_type == PropertyType.PROP_BOOLEAN:
-            assert self.value_integer is not None
-            return bool(self.value_integer)
+            if self.value_integer is not None:
+                return bool(self.value_integer)
+            else:
+                return None
         elif self.class_prop_type == PropertyType.PROP_LINK:
-            assert self.value_text is not None
             return self.value_text
         elif self.class_prop_type == PropertyType.PROP_LINKS:
-            assert self.value_text is not None
-            return set(self.value_text.split(";"))
+            if self.value_text is not None:
+                return set(self.value_text.split(";"))
+            else:
+                return None
 
 
 class BaseProperty(object):
@@ -923,6 +925,7 @@ class Database(object):
         """
         Create a class property.
         """
+        # Create the class property
         cur: Cursor = self.conn.cursor()
         rows: Cursor = cur.execute(
             """
@@ -942,6 +945,25 @@ class Database(object):
         )
         cls_prop_id: int = list(rows)[0][0]
         self.conn.commit()
+        # Create the property for all objects of this class.
+        created_at: int = now_millis()
+        for obj in self.list_objects_of_class(class_id):
+            prop_id: int = self.create_property(
+                class_prop_id=cls_prop_id,
+                class_prop_title=title,
+                class_prop_type=prop_type,
+                object_id=obj.id,
+                value_integer=None,
+                value_text=None,
+            )
+            self.create_property_change(
+                object_id=obj.id,
+                prop_id=prop_id,
+                prop_title=title,
+                created_at=created_at,
+                value_integer=None,
+                value_text=None,
+            )
         return ClassPropRec(
             id=cls_prop_id,
             class_id=class_id,
@@ -1018,6 +1040,38 @@ class Database(object):
                 title=row["title"],
                 class_id=row["class_id"],
                 directory_id=dir_id,
+                icon_emoji=row["icon_emoji"],
+                cover_id=row["cover_id"],
+                created_at=row["created_at"],
+                modified_at=row["modified_at"],
+            )
+            for row in rows
+        ]
+
+    def list_objects_of_class(self, cls_id: int) -> List[ObjectRec]:
+        """
+        Retrieve all objects of a class.
+        """
+        cur: Cursor = self.conn.cursor()
+        rows: List[Row] = cur.execute(
+            """
+            select
+                id, title, directory_id, icon_emoji, cover_id, created_at, modified_at
+            from
+                objects
+            where
+                class_id = :class_id;
+            """,
+            {
+                "class_id": cls_id,
+            },
+        ).fetchall()
+        return [
+            ObjectRec(
+                id=row["id"],
+                title=row["title"],
+                class_id=cls_id,
+                directory_id=row["directory_id"],
                 icon_emoji=row["icon_emoji"],
                 cover_id=row["cover_id"],
                 created_at=row["created_at"],

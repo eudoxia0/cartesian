@@ -78,7 +78,8 @@ export default function DirectoryTree() {
 
 
     function handleDrop(newTreeData: Array<TreeNode>) {
-        newTreeData.forEach((tree: TreeNode) =>
+        newTreeData.forEach((tree: TreeNode) => {
+            const dir: DirectoryRec = fromTree(tree);
             fetch(`/api/directories/${tree.id}`,
                 {
                     headers: {
@@ -87,9 +88,9 @@ export default function DirectoryTree() {
                     },
                     method: "POST",
                     body: JSON.stringify({
-                        "title": tree.text,
-                        "parent_id": tree.parent,
-                        "icon_emoji": tree.data.icon_emoji,
+                        "title": dir.title,
+                        "parent_id": dir.parent_id,
+                        "icon_emoji": dir.icon_emoji,
                     })
                 }
             )
@@ -101,7 +102,7 @@ export default function DirectoryTree() {
                         dispatch(replaceDirectoryList(newTreeData.map(fromTree)));
                     }
                 })
-        );
+        });
     }
 
     function handleAddToplevelDirectory(event: MouseEvent<HTMLButtonElement>) {

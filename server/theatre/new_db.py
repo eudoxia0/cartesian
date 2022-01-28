@@ -184,9 +184,25 @@ class PropRec:
             "class_prop_id": self.class_prop_id,
             "class_prop_title": self.class_prop_title,
             "class_prop_type": self.class_prop_type,
-            "value_integer": self.value_integer,
-            "value_text": self.value_text,
+            "value": self._value_json(),
         }
+
+    def _value_json(self):
+        if self.class_prop_type == PropertyType.PROP_RICH_TEXT:
+            assert self.value_text is not None
+            return self.value_text
+        elif self.class_prop_type == PropertyType.PROP_FILE:
+            assert self.value_integer is not None
+            return self.value_integer
+        elif self.class_prop_type == PropertyType.PROP_BOOLEAN:
+            assert self.value_integer is not None
+            return bool(self.value_integer)
+        elif self.class_prop_type == PropertyType.PROP_LINK:
+            assert self.value_text is not None
+            return self.value_text
+        elif self.class_prop_type == PropertyType.PROP_LINKS:
+            assert self.value_text is not None
+            return set(self.value_text.split(";"))
 
 
 class BaseProperty(object):

@@ -3,10 +3,7 @@ This module implements the HTTP server.
 """
 import json
 import traceback
-from datetime import datetime
-import tempfile
 import hashlib
-import subprocess
 from typing import Optional, List, Set, Tuple
 
 from flask import make_response, Response, current_app, g
@@ -42,6 +39,7 @@ from theatre.db import (
 )
 from theatre.text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
+from theatre.utils import determine_mime_type, now_millis
 
 bp = Blueprint("api", __name__, url_prefix="")
 
@@ -670,7 +668,7 @@ def edit_object_endpoint(title: str):
                 if not db.file_exists(prop_value):
                     raise file_not_found(prop_value)
                 # Set the values
-                value_file = prop_value
+                value_integer = prop_value
             elif cls_prop.type == PropertyType.PROP_BOOLEAN:
                 # The value should be a boolean value.
                 assert isinstance(prop_value, bool)
@@ -828,43 +826,3 @@ def handle_ct_error(e: Exception):
         501,
     )
     return resp
-
-
-# Utils
-
-
-def now_millis() -> int:
-    return datetime_to_millis(datetime.now())
-
-
-def datetime_to_millis(stamp: datetime) -> int:
-    """
-    Convert a datetime to Unix time in milliseconds.
-    """
-    return int(stamp.timestamp() * 1000)
-
-
-def millis_to_datetime(millis: int) -> datetime:
-    """
-    Convert a Unix time in milliseconds to a datetime.
-    """
-    return datetime.fromtimestamp(float(millis) / 1000)
-
-
-def determine_mime_type(blob: bytes) -> str:
-    """
-    Determine the MIME-type of a byte stream.
-    """
-    # Write the contents to a temporary file
-    stream = tempfile.NamedTemporaryFile()
-    stream.write(blob)
-    stream.flush()
-    # Shell out to the `file` tool to extract the MIME type.
-    mime_type: str = (
-        subprocess.check_output(["file", "-b", "--mime-type", stream.name])
-        .decode("utf-8")
-        .strip()
-    )
-    # Close the stream, deleting the file.
-    stream.close()
-    return mime_type

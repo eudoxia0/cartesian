@@ -144,10 +144,10 @@ def list_directories():
 
 @bp.route("/api/directories/<int:dir_id>", methods=["GET"])
 def get_directory(dir_id: int):
-    dir: DirRec | None = get_db().get_directory(dir_id)
-    if dir is not None:
+    dir_rec: DirRec | None = get_db().get_directory(dir_id)
+    if dir_rec is not None:
         return {
-            "data": dir.to_json(),
+            "data": dir_rec.to_json(),
             "error": None,
         }
     else:
@@ -172,7 +172,7 @@ def new_directory():
         parent_id=parent_id,
         created_at=created_at,
     )
-    dir: DirRec = DirRec(
+    dir_rec: DirRec = DirRec(
         id=dir_id,
         title=title,
         icon_emoji=icon_emoji,
@@ -182,7 +182,7 @@ def new_directory():
     )
     # Return directory data
     return {
-        "data": dir.to_json(),
+        "data": dir_rec.to_json(),
         "error": None,
     }
 

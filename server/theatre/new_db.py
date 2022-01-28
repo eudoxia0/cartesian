@@ -707,7 +707,7 @@ class Database(object):
             set
                 title = :title,
                 icon_emoji = :icon_emoji,
-                cover_id = :cover_id
+                cover_id = :cover_id,
                 parent_id = :parent_id
             where
                 id = :id;

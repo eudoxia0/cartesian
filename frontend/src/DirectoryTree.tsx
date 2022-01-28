@@ -15,6 +15,8 @@ interface TreeNode {
     droppable: boolean;
     data: {
         icon_emoji: string;
+        cover_id: number | null;
+        created_at: number;
     }
 }
 
@@ -28,6 +30,8 @@ function asTree(dir: DirectoryRec): TreeNode {
         droppable: true,
         data: {
             icon_emoji: dir.icon_emoji,
+            cover_id: dir.cover_id,
+            created_at: dir.created_at,
         }
     }
 }
@@ -37,7 +41,9 @@ function fromTree(tree: TreeNode): DirectoryRec {
         id: tree.id,
         title: tree.text,
         icon_emoji: tree.data.icon_emoji,
+        cover_id: tree.data.cover_id,
         parent_id: (tree.parent === ROOT_ID) ? null : tree.parent,
+        created_at: tree.data.created_at,
     }
 }
 

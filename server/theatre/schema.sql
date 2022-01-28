@@ -105,25 +105,13 @@ create table properties (
     class_prop_type integer not null,
     object_id integer not null,
 
-    -- If the property is of type RICH_TEXT, this is the serialized form of the text contents.
+    value_integer integer,
     value_text text,
-    -- If the property is of type FILE, this is the ID of the file.
-    value_file integer,
-    -- If the property is of type BOOLEAN, this is the boolean value.
-    value_bool integer,
-    -- If the property is of type SELECT, this is the selected option.
-    value_select text,
-    -- If the property is of type LINK, this is the ID of the linked object.
-    value_link integer,
-    -- If the property is of type LINKS, this is the IDs of the objects encoded as a comma-separated string.
-    value_links text,
 
     foreign key (class_prop_id) references class_props(id) on update cascade on delete cascade,
     constraint non_empty_class_prop_title check (class_prop_title <> ''),
     constraint valid_class_prop_type check (class_prop_type in (0, 1, 2, 3, 4, 5)),
     foreign key (object_id) references objects(id) on update cascade on delete cascade,
-    foreign key (value_file) references files(id) on update cascade on delete set null,
-    foreign key (value_link) references objects(id) on update cascade on delete set null
 );
 
 create virtual table properties_fts using fts5 (
@@ -172,25 +160,13 @@ create table property_changes (
     prop_title text not null,
     created_at integer not null,
 
-    -- If the property is of type RICH_TEXT, this is the serialized form of the text contents.
+    value_integer integer,
     value_text text,
-    -- If the property is of type FILE, this is the ID of the file.
-    value_file integer,
-    -- If the property is of type BOOLEAN, this is the boolean value.
-    value_bool integer,
-    -- If the property is of type SELECT, this is the selected option.
-    value_select text,
-    -- If the property is of type LINK, this is the ID of the linked object.
-    value_link integer,
-    -- If the property is of type LINKS, this is the IDs of the objects encoded as a comma-separated string.
-    value_links text,
 
     foreign key (object_id) references objects(id) on update cascade on delete cascade,
     foreign key (prop_id) references properties(id) on update cascade on delete set null,
     constraint non_empty_prop_title check (prop_title <> ''),
     constraint positive_created_at check(created_at > 0),
-    foreign key (value_file) references files(id) on update cascade on delete set null,
-    foreign key (value_link) references objects(id) on update cascade on delete set null
 );
 
 create table links (

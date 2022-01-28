@@ -32,7 +32,9 @@ def parse_block_node(json: dict):
 
 
 def parse_paragraph(json: dict) -> Paragraph:
-    return Paragraph(children=[parse_fragment(elem) for elem in json.get("content", [])])
+    return Paragraph(
+        children=[parse_fragment(elem) for elem in json.get("content", [])]
+    )
 
 
 def parse_unordered_list(json: dict) -> UnorderedList:
@@ -84,7 +86,9 @@ def parse_text(json: dict) -> Union[TextFragment, WebLinkFragment]:
         return WebLinkFragment(url=url)
     else:
         is_em: bool = bool([mark for mark in marks if mark.get("type", "") == "em"])
-        is_bold: bool = bool([mark for mark in marks if mark.get("type", "") == "strong"])
+        is_bold: bool = bool(
+            [mark for mark in marks if mark.get("type", "") == "strong"]
+        )
         is_code: bool = bool([mark for mark in marks if mark.get("type", "") == "code"])
         return TextFragment(
             contents=json["text"], emphasized=is_em, bold=is_bold, code=is_code
@@ -106,7 +110,6 @@ def parse_inline_math(json: dict) -> MathFragment:
 
 def emit_document(doc: CTDocument) -> dict:
     return {"type": "doc", "content": [emit_block(elem) for elem in doc.children]}
-
 
 
 def emit_block(block: BlockNode) -> dict:
@@ -176,12 +179,7 @@ def emit_frag(frag: InlineFragment) -> dict:
         return {
             "type": "text",
             "text": frag.url,
-            "marks": [
-                {
-                    "type": "link",
-                    "attrs": {"href": frag.url}
-                }
-            ]
+            "marks": [{"type": "link", "attrs": {"href": frag.url}}],
         }
     else:
         raise CTError("Unknown Inline Fragment", "Unknown inline fragment type.")

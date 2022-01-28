@@ -14,7 +14,7 @@ interface Props {
     obj: ObjectDetailRec;
 }
 
-type PropValues = { [key: string]: string | number | null; };
+type PropValues = { [key: string]: string | number | boolean | Array<string> | null; };
 
 export default function ObjectEdit(props: Props) {
     let navigate = useNavigate();
@@ -27,9 +27,9 @@ export default function ObjectEdit(props: Props) {
         const initialPropValues: PropValues = {};
         for (const prop of props.obj.properties) {
             if (prop.class_prop_type === "PROP_RICH_TEXT") {
-                initialPropValues[prop.class_prop_title] = prop.value_text;
+                initialPropValues[prop.class_prop_title] = prop.value;
             } else if (prop.class_prop_type === "PROP_FILE") {
-                initialPropValues[prop.class_prop_title] = prop.value_file;
+                initialPropValues[prop.class_prop_title] = prop.value;
             }
         }
         setPropValues(initialPropValues);
@@ -54,11 +54,11 @@ export default function ObjectEdit(props: Props) {
 
     function renderValue(propval: PropValueRec) {
         if (propval.class_prop_type === "PROP_RICH_TEXT") {
-            const initial = JSON.parse(propval.value_text!);
+            const initial = JSON.parse(propval.value! as string);
             return <Editor initialDoc={initial} onChange={(doc: any) => handleEditorChange(propval.class_prop_title, doc)} />;
         } else if (propval.class_prop_type === "PROP_FILE") {
             return <FilePropWidget
-                initialFileId={propval.value_file}
+                initialFileId={propval.value as number}
                 onUpload={(fileId: number) => handleFileUpload(propval.class_prop_title, fileId)} />;
         }
     }

@@ -42,6 +42,7 @@ export default function ClassNewProperty(props: Props) {
                     "title": eff_title,
                     "type": type,
                     "description": eff_desc,
+                    "select_options": [],
                 })
             }
         )

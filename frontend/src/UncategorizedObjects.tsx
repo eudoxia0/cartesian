@@ -25,7 +25,7 @@ export default function UncategorizedObjects() {
 
         return (
             <SimpleContainer
-                title={<span>Directory Contents</span>}
+                title={<span>Uncategorized Objects</span>}
                 body={
                     <table>
                         <thead>

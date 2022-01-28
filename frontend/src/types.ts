@@ -26,7 +26,9 @@ export interface DirectoryRec {
     id: number;
     title: string;
     icon_emoji: string;
+    cover_id: number | null;
     parent_id: number | null;
+    created_at: number;
 }
 
 export interface ObjectSummaryRec {
@@ -46,8 +48,7 @@ export interface PropValueRec {
     class_prop_id: number;
     class_prop_title: string;
     class_prop_type: PropType;
-    value_text: string | null;
-    value_file: number | null;
+    value: string | number | boolean | Array<string> | null;
 }
 
 export interface LinkRec {

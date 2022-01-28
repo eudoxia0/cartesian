@@ -7,50 +7,19 @@ from datetime import datetime
 import tempfile
 import hashlib
 import subprocess
-from sqlite3 import Connection, Cursor
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Tuple
 
 from flask import make_response, Response, current_app, g
-from theatre.error import CTError
+from theatre.error import (
+    CTError,
+    file_not_found,
+    directory_not_found,
+    class_not_found,
+    class_prop_not_found,
+    object_not_found,
+)
 from theatre.extract_links import extract_links
 from theatre.flask_db import get_db
-from theatre.db import (
-    get_tex_macros,
-    set_tex_macros,
-    directory_exists,
-    list_classes,
-    get_class,
-    create_class,
-    class_exists,
-    ClassPropertyRec,
-    get_class_properties,
-    create_class_property,
-    PropertyType,
-    file_exists,
-    create_file,
-    ClassRec,
-    get_object_by_title,
-    create_object,
-    create_property,
-    create_property_change,
-    ObjectRec,
-    list_objects,
-    PropertyRec,
-    list_object_properties,
-    create_link,
-    get_object_property,
-    delete_links_from,
-    edit_property,
-    update_object,
-    class_property_exists,
-    delete_class_property,
-    list_objects_in_directory,
-    list_uncategorized_objects,
-    update_class,
-    get_links_to_object,
-    delete_object,
-    search_objects,
-)
 
 from flask import (
     Blueprint,
@@ -59,52 +28,22 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
+from theatre.new_db import (
+    Database,
+    FileRec,
+    DirRec,
+    ClassDetailRec,
+    ClassPropRec,
+    ClassRec,
+    PropertyType,
+    ObjectRec,
+    PropRec,
+    ObjectDetailRec,
+)
 from theatre.new_text import CTDocument
 from theatre.prosemirror import parse_document, emit_document
 
-from theatre.db import delete_class
-
 bp = Blueprint("api", __name__, url_prefix="")
-
-
-#
-# Tex macro endpoints
-#
-
-
-@bp.route("/api/tex-macros", methods=["GET"])
-def get_tex_macros_endpoint():
-    """
-    ```
-    $> curl "http://localhost:5000/api/tex-macros"
-    {
-      "data": "test",
-      "error": null,
-    }
-    ```
-    """
-    return {
-        "error": None,
-        "data": get_tex_macros(get_db()),
-    }
-
-
-@bp.route("/api/tex-macros", methods=["POST"])
-def update_tex_macros():
-    """
-    ```
-    $> curl -X POST "http://localhost:5000/api/tex-macros" -H 'Content-Type: application/json' -d '{ "macros": "test" }'
-    {
-      "data": null,
-      "error": null,
-    }
-    ```
-    """
-    set_tex_macros(get_db(), request.json["macros"])
-    return {
-        "error": None,
-        "data": None,
-    }
 
 
 #
@@ -114,267 +53,36 @@ def update_tex_macros():
 
 @bp.route("/api/files", methods=["GET"])
 def list_files():
-    """
-    # File List Endpoint
-
-    ## Description
-
-    List all files.
-
-    ## Output
-
-    The `data` property is an array of objects with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl "http://localhost:5000/api/files"
-    {
-      "data": [
-        {
-          "created_at": 1640537314080,
-          "filename": "derp",
-          "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-          "id": 1,
-          "mime_type": "image/png",
-          "size": 1451277
-        }
-      ],
-      "error": null,
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            id, filename, mime_type, size, hash, created_at
-        from
-            files
-        order by
-            created_at desc;
-        """
-    ).fetchall()
     return {
         "error": None,
-        "data": [
-            {
-                "id": row[0],
-                "filename": row[1],
-                "mime_type": row[2],
-                "size": row[3],
-                "hash": row[4],
-                "created_at": row[5],
-            }
-            for row in results
-        ],
+        "data": [rec.to_json() for rec in get_db().list_files()],
     }
 
 
 @bp.route("/api/files/<int:file_id>", methods=["GET"])
 def get_file(file_id: int):
-    """
-    # File Retrieval Endpoint
-
-    ## Description
-
-    Return the metadata associated with a file.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The `data` property is an object with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl -v "http://localhost:5000/api/files/3/contents" -o file.png
-    [...]
-    < Content-Type: image/png
-    [...]
-
-    $ curl "http://localhost:5000/api/files/7"
-    {
-      "data": {
-        "created_at": 1640539572771,
-        "filename": "kustodiev.png",
-        "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-        "id": 7,
-        "mime_type": "image/png",
-        "size": 1451277
-      },
-      "error": null
-    }
-
-    $ curl "http://localhost:5000/api/files/8"
-    {
-      "data": null,
-      "error": {
-        "message": "The file with the ID '8' was not found in the database.",
-        "title": "File Not Found"
-      }
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            filename, mime_type, size, hash, created_at
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    ).fetchall()
-    if results:
-        row = results[0]
+    file: FileRec | None = get_db().get_file_by_id(file_id)
+    if file is not None:
         return {
-            "data": {
-                "id": file_id,
-                "filename": row[0],
-                "mime_type": row[1],
-                "size": row[2],
-                "hash": row[3],
-                "created_at": row[4],
-            },
+            "data": file.to_json(),
             "error": None,
         }
     else:
-        raise CTError(
-            "File Not Found",
-            f"The file with the ID '{file_id}' was not found in the database.",
-        )
+        raise file_not_found(file_id)
 
 
 @bp.route("/api/files/<int:file_id>/contents", methods=["GET"])
 def file_contents(file_id: int):
-    """
-    # File Contents Endpoint
-
-    ## Description
-
-    Retrieve the byte stream of a file's data.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The byte stream of the underlying file, or a JSON document containing an error message.
-
-    ## Example
-
-    ```
-    $ curl -v "http://localhost:5000/api/files/3/contents" -o file.png
-    [...]
-    < Content-Type: image/png
-    [...]
-
-    $ curl "http://localhost:5000/api/files/123/contents"
-    {
-      "data": null,
-      "error": {
-        "title": "File Not Found",
-        "message": "The file with the ID '123' was not found in the database."
-      }
-    }
-    ```
-    """
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            mime_type, data
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    ).fetchall()
-    if results:
-        mime_type, blob = results[0]
-        assert isinstance(mime_type, str)
-        assert isinstance(blob, bytes)
+    data: Tuple[str, bytes] | None = get_db().get_file_data(file_id)
+    if data is not None:
+        mime_type, blob = data
         return Response(blob, mimetype=mime_type)
     else:
-        raise CTError(
-            "File Not Found",
-            f"The file with the ID '{file_id}' was not found in the database.",
-        )
+        raise file_not_found(file_id)
 
 
 @bp.route("/api/files", methods=["POST"])
 def upload_file():
-    """
-    # File Upload Endpoint
-
-    ## Description
-
-    Upload a file.
-
-    ## Request Body
-
-    The POST body must be the file contents.
-
-    ## Output
-
-    The `data` property is an object with these properties:
-
-    | Property | Type | Description |
-    | `id` | Integer | The file ID. |
-    | `filename` | String | The filename. |
-    | `mime_type` | String | The MIME type of the file. |
-    | `size` | Integer | The size of the file in bytes. |
-    | `hash` | String | The SHA256 hash of the file contents. |
-    | `created_at` | Timestamp | A Unix timestamp in milliseconds of the time when the file was uploaded. |
-
-    ## Example
-
-    ```
-    $ curl -X POST "http://localhost:5000/api/files" -F "data=@/home/eudoxia/pic.png"
-    {
-      "data": {
-        "created_at": 1640536346827,
-        "filename": "pic.png",
-        "hash": "a68c20a73f6220485486191a7828d3cd36a6c4c796815d606f47c84aaedbd952",
-        "id": 6,
-        "size": 1451277
-      },
-      "error": null
-    }
-    ```
-
-    """
     # Extract file data, put it in a temporary file.
     file_data = request.files["data"]
     filename: str = secure_filename(file_data.filename)
@@ -385,104 +93,40 @@ def upload_file():
     size: int = len(blob)
     sha256hash: str = hashlib.sha256(blob).hexdigest()
     created_at: int = now_millis()
-    db = get_db()
-    file_id: int = create_file(
-        conn=db,
+    file_id: int = get_db().create_file(
+        filename=filename,
+        mime_type=mime_type,
+        size=size,
+        sha256hash=sha256hash,
+        created_at=created_at,
+        blob=blob,
+    )
+    rec: FileRec = FileRec(
+        id=file_id,
         filename=filename,
         mime_type=mime_type,
         size=size,
         hash=sha256hash,
         created_at=created_at,
-        blob=blob,
     )
     # Return file data
     return {
-        "data": {
-            "id": file_id,
-            "filename": filename,
-            "mime_type": mime_type,
-            "size": size,
-            "hash": sha256hash,
-            "created_at": created_at,
-        },
+        "data": rec.to_json(),
         "error": None,
     }
 
 
 @bp.route("/api/files/<int:file_id>", methods=["DELETE"])
 def delete_file(file_id: int):
-    """
-    # File Deletion Endpoint
-
-    ## Description
-
-    Endpoint to delete a file.
-
-    ## URL Parameters
-
-    - `id`: The integer ID of the file to retrieve.
-
-    ## Output
-
-    The `data` property is a boolean that is `true` on success`, and `null` otherwise.
-
-    ## Example
-
-    ```
-    $  curl -X DELETE "http://localhost:5000/api/files/8"
-    {
-      "data": true,
-      "error": null
-    }
-
-    $> curl -X DELETE "http://localhost:5000/api/files/8"
-    {
-      "data": null,
-      "error": {
-        "message": "The file with the ID '8' was not found in the database.",
-        "title": "File Not Found"
-      }
-    }
-    ```
-
-    """
-    db: Connection = get_db()
-    cur: Cursor = db.cursor()
-    cur.execute(
-        """
-        select
-            id
-        from
-            files
-        where
-            id = :id;
-        """,
-        {
-            "id": file_id,
-        },
-    )
-    if cur.fetchall():
-        cur.execute(
-            """
-            delete from
-                files
-            where
-                id = :id
-            """,
-            {
-                "id": file_id,
-            },
-        )
-        db.commit()
+    db: Database = get_db()
+    if db.file_exists(file_id):
+        db.delete_file(file_id)
         return {
             "data": True,
             "error": None,
         }
     else:
-        raise CTError(
-            "File Not Found",
-            f"The file with the ID '{file_id}' was not found in the database.",
-        )
+        raise file_not_found(file_id)
 
 
 #
@@ -492,65 +136,22 @@ def delete_file(file_id: int):
 
 @bp.route("/api/directories", methods=["GET"])
 def list_directories():
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            id, title, icon_emoji, parent_id, created_at
-        from
-            directories;
-        """
-    ).fetchall()
     return {
         "error": None,
-        "data": [
-            {
-                "id": row["id"],
-                "title": row["title"],
-                "icon_emoji": row["icon_emoji"],
-                "parent_id": row["parent_id"],
-                "created_at": row["created_at"],
-            }
-            for row in results
-        ],
+        "data": [rec.to_json() for rec in get_db().list_directories()],
     }
 
 
 @bp.route("/api/directories/<int:dir_id>", methods=["GET"])
 def get_directory(dir_id: int):
-    db = get_db()
-    cur = db.cursor()
-    results = cur.execute(
-        """
-        select
-            title, icon_emoji, parent_id, created_at
-        from
-            directories;
-        where
-            id = :id;
-        """,
-        {
-            "id": dir_id,
-        },
-    ).fetchall()
-    if results:
-        row = results[0]
+    dir_rec: DirRec | None = get_db().get_directory(dir_id)
+    if dir_rec is not None:
         return {
-            "data": {
-                "id": dir_id,
-                "title": row["title"],
-                "icon_emoji": row["icon_emoji"],
-                "parent_id": row["parent_id"],
-                "created_at": row["created_at"],
-            },
+            "data": dir_rec.to_json(),
             "error": None,
         }
     else:
-        raise CTError(
-            "Directory Not Found",
-            f"The directory with the ID '{dir_id}' was not found in the database.",
-        )
+        raise directory_not_found(dir_id)
 
 
 @bp.route("/api/directories", methods=["POST"])
@@ -559,41 +160,29 @@ def new_directory():
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
     parent_id: Optional[int] = form["parent_id"]
-    db = get_db()
-    cur = db.cursor()
+    db: Database = get_db()
     if parent_id:
-        if not directory_exists(db, parent_id):
-            raise CTError(
-                "Directory Not Found",
-                f"The directory with the ID '{parent_id}' was not found in the database.",
-            )
+        if not db.directory_exists(parent_id):
+            raise directory_not_found(parent_id)
     created_at: int = now_millis()
-    results = cur.execute(
-        """
-        insert into directories
-            (title, icon_emoji, parent_id, created_at)
-        values
-            (:title, :icon_emoji, :parent_id, :created_at)
-        returning id;
-        """,
-        {
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "created_at": created_at,
-        },
+    dir_id: int = db.create_directory(
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
+        created_at=created_at,
     )
-    dir_id: int = list(results)[0][0]
-    db.commit()
-    # Return file data
+    dir_rec: DirRec = DirRec(
+        id=dir_id,
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
+        created_at=created_at,
+    )
+    # Return directory data
     return {
-        "data": {
-            "id": dir_id,
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "created_at": created_at,
-        },
+        "data": dir_rec.to_json(),
         "error": None,
     }
 
@@ -604,78 +193,42 @@ def edit_directory(dir_id: int):
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
     parent_id: Optional[int] = form["parent_id"]
-    db = get_db()
-    cur = db.cursor()
+    db: Database = get_db()
     if parent_id:
-        if not directory_exists(db, parent_id):
-            raise CTError(
-                "Directory Not Found",
-                f"The directory with the ID '{parent_id}' was not found in the database.",
-            )
-    cur.execute(
-        """
-        update directories
-        set
-            title = :title,
-            icon_emoji = :icon_emoji,
-            parent_id = :parent_id
-        where
-            id = :id;
-        """,
-        {
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-            "id": dir_id,
-        },
+        if not db.directory_exists(parent_id):
+            raise directory_not_found(parent_id)
+    db.edit_directory(
+        dir_id=dir_id,
+        title=title,
+        icon_emoji=icon_emoji,
+        cover_id=None,
+        parent_id=parent_id,
     )
-    db.commit()
     # Return directory data
     return {
-        "data": {
-            "id": dir_id,
-            "title": title,
-            "icon_emoji": icon_emoji,
-            "parent_id": parent_id,
-        },
+        "data": db.get_directory(dir_id).to_json(),
         "error": None,
     }
 
 
 @bp.route("/api/directories/<int:dir_id>", methods=["DELETE"])
 def delete_directory(dir_id: int):
-    db = get_db()
-    cur = db.cursor()
-    if directory_exists(db, dir_id):
-        cur.execute(
-            """
-            delete from
-                directories
-            where
-                id = :id
-            """,
-            {
-                "id": dir_id,
-            },
-        )
-        db.commit()
+    db: Database = get_db()
+    if db.directory_exists(dir_id):
+        db.delete_directory(dir_id)
         return {
             "data": True,
             "error": None,
         }
     else:
-        raise CTError(
-            "Directory Not Found",
-            f"The directory with the ID '{dir_id}' was not found in the database.",
-        )
+        raise directory_not_found(dir_id)
 
 
 @bp.route("/api/directories/<int:dir_id>/objects", methods=["GET"])
 def list_objects_in_directory_endpoint(dir_id: int):
     return {
         "data": [
-            obj.to_json()
-            for obj in list_objects_in_directory(conn=get_db(), dir_id=dir_id)
+            obj.to_json() for obj in get_db().list_objects_in_directory(dir_id=dir_id)
         ],
         "error": None,
     }
@@ -684,7 +237,7 @@ def list_objects_in_directory_endpoint(dir_id: int):
 @bp.route("/api/uncategorized-objects", methods=["GET"])
 def list_uncategorized_objects_endpoint():
     return {
-        "data": [obj.to_json() for obj in list_uncategorized_objects(conn=get_db())],
+        "data": [obj.to_json() for obj in get_db().list_uncategorized_objects()],
         "error": None,
     }
 
@@ -696,60 +249,52 @@ def list_uncategorized_objects_endpoint():
 
 @bp.route("/api/classes", methods=["GET"])
 def list_classes_endpoint():
-    conn: Connection = get_db()
-    records: List[ClassRec] = list_classes(conn)
-    jsons: List[dict] = [rec.to_json() for rec in records]
-    for rec in jsons:
-        rec["properties"] = [p.to_json() for p in get_class_properties(conn, rec["id"])]
+    db: Database = get_db()
+    details: List[ClassDetailRec] = [
+        ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id))
+        for cls in db.list_classes()
+    ]
     return {
         "error": None,
-        "data": jsons,
+        "data": [d.to_json() for d in details],
     }
 
 
 @bp.route("/api/classes/<int:cls_id>", methods=["GET"])
 def get_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    rec: Optional[ClassRec] = get_class(conn, cls_id)
-    if rec is not None:
-        obj = rec.to_json()
-        obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
+    db: Database = get_db()
+    cls: ClassRec | None = db.get_class(cls_id)
+    if cls is not None:
         return {
-            "data": obj,
+            "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
             "error": None,
         }
     else:
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
+        raise class_not_found(cls_id)
 
 
 @bp.route("/api/classes", methods=["POST"])
 def new_class_endpoint():
-    conn: Connection = get_db()
+    # Parse input
     form: dict = request.json
     title: str = form["title"].strip()
     icon_emoji: str = form["icon_emoji"].strip()
-    rec: ClassRec = create_class(conn, title, icon_emoji)
-    obj = rec.to_json()
-    obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
+    # Create
+    db: Database = get_db()
+    cls: ClassRec = db.create_class(title=title, icon_emoji=icon_emoji)
     return {
-        "data": obj,
+        "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
         "error": None,
     }
 
 
 @bp.route("/api/classes/<int:cls_id>/properties", methods=["GET"])
 def get_class_properties_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if not class_exists(conn, cls_id):
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
+    db: Database = get_db()
+    if not db.class_exists(cls_id):
+        raise class_not_found(cls_id)
     else:
-        records: List[ClassPropertyRec] = get_class_properties(conn, cls_id)
+        records: List[ClassPropRec] = db.get_class_properties(cls_id)
         return {
             "error": None,
             "data": [rec.to_json() for rec in records],
@@ -758,23 +303,21 @@ def get_class_properties_endpoint(cls_id: int):
 
 @bp.route("/api/classes/<int:cls_id>/properties", methods=["POST"])
 def new_class_property_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if not class_exists(conn, cls_id):
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
+    db: Database = get_db()
+    if not db.class_exists(cls_id):
+        raise class_not_found(cls_id)
     else:
         form: dict = request.json
         title: str = form["title"].strip()
         prop_ty: PropertyType = PropertyType(form["type"])
         description: str = form["description"].strip()
-        rec: ClassPropertyRec = create_class_property(
-            conn=conn,
+        select_options: List[str] = form["select_options"]
+        rec: ClassPropRec = db.create_class_property(
             class_id=cls_id,
             title=title,
             prop_type=prop_ty,
             description=description,
+            select_options=select_options,
         )
         return {
             "error": None,
@@ -784,19 +327,13 @@ def new_class_property_endpoint(cls_id: int):
 
 @bp.route("/api/classes/<int:cls_id>/properties/<int:cls_prop_id>", methods=["DELETE"])
 def delete_class_property_endpoint(cls_id: int, cls_prop_id: int):
-    conn: Connection = get_db()
-    if not class_exists(conn, cls_id):
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
-    if not class_property_exists(conn, cls_prop_id):
-        raise CTError(
-            "Class Property Not Found",
-            f"The class property with the ID '{cls_prop_id}' was not found in the database.",
-        )
+    db: Database = get_db()
+    if not db.class_exists(cls_id):
+        raise class_not_found(cls_id)
+    if not db.class_property_exists(cls_prop_id):
+        raise class_prop_not_found(cls_prop_id)
     else:
-        delete_class_property(conn, cls_prop_id)
+        db.delete_class_property(cls_prop_id)
         return {
             "data": None,
             "error": None,
@@ -805,42 +342,35 @@ def delete_class_property_endpoint(cls_id: int, cls_prop_id: int):
 
 @bp.route("/api/classes/<int:cls_id>", methods=["DELETE"])
 def delete_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    rec: Optional[ClassRec] = get_class(conn, cls_id)
-    if rec is not None:
-        delete_class(conn, rec.id)
+    db: Database = get_db()
+    if db.class_exists(cls_id):
+        db.delete_class(cls_id)
         return {
-            "data": None,
+            "data": True,
             "error": None,
         }
     else:
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
+        raise class_not_found(cls_id)
 
 
 @bp.route("/api/classes/<int:cls_id>", methods=["POST"])
 def update_class_endpoint(cls_id: int):
-    conn: Connection = get_db()
-    if class_exists(conn, cls_id):
+    db: Database = get_db()
+    if db.class_exists(cls_id):
         form: dict = request.json
         title: str = form["title"].strip()
         icon_emoji: str = form["icon_emoji"].strip()
-        rec: ClassRec = update_class(
-            conn=conn, cls_id=cls_id, new_title=title, new_icon_emoji=icon_emoji
+        rec: ClassRec = db.update_class(
+            cls_id=cls_id, new_title=title, new_icon_emoji=icon_emoji
         )
-        obj = rec.to_json()
-        obj["properties"] = [p.to_json() for p in get_class_properties(conn, rec.id)]
         return {
-            "data": obj,
+            "data": ClassDetailRec(
+                cls=rec, props=db.get_class_properties(rec.id)
+            ).to_json(),
             "error": None,
         }
     else:
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{cls_id}' was not found in the database.",
-        )
+        raise class_not_found(cls_id)
 
 
 #
@@ -859,29 +389,23 @@ def new_object_endpoint():
     cover_id: Optional[int] = form["directory_id"]
     property_values: dict = form["values"]
     # If an object with this title exists, reject it
-    conn: Connection = get_db()
-    if get_object_by_title(conn, title) is not None:
+    db: Database = get_db()
+    if db.get_object_by_title(title) is not None:
         raise CTError(
             "Duplicate Title",
             f"An object with the title '{title}' already exists.",
         )
     # Find the class
-    cls: Optional[ClassRec] = get_class(conn, class_id)
+    cls: Optional[ClassRec] = db.get_class(class_id)
     if cls is None:
-        raise CTError(
-            "Class Not Found",
-            f"The class with the ID '{id}' was not found in the database.",
-        )
+        raise class_not_found(class_id)
 
     # Find the directory, if any
     if directory_id is not None:
-        if not directory_exists(conn, directory_id):
-            raise CTError(
-                "Directory Not Found",
-                f"The directory with the ID '{id}' was not found in the database.",
-            )
+        if not db.directory_exists(directory_id):
+            raise directory_not_found(directory_id)
     # Find the set of class properties
-    cls_props: List[ClassPropertyRec] = get_class_properties(conn, class_id)
+    cls_props: List[ClassPropRec] = db.get_class_properties(class_id)
     # Check: the dictionary of values provided by the client has all the keys we expect
     input_keys: Set[str] = set(property_values.keys())
     expected_keys: Set[str] = set([prop.title for prop in cls_props])
@@ -897,8 +421,7 @@ def new_object_endpoint():
         effective_icon_emoji = cls.icon_emoji
     # Create the object
     created_at: int = now_millis()
-    object_id: int = create_object(
-        conn=conn,
+    object_id: int = db.create_object(
         title=title,
         class_id=class_id,
         directory_id=directory_id,
@@ -910,19 +433,17 @@ def new_object_endpoint():
     # Create the properties
     for prop_title, prop_value in property_values.items():
         # Find the corresponding class property
-        cls_prop: ClassPropertyRec = [
+        cls_prop: ClassPropRec = [
             prop for prop in cls_props if prop.title == prop_title
         ][0]
-        # Dispatch on the type of the class property
-        value_text: Optional[str]
-        value_file: Optional[int]
+        # These variables store the property's value
+        value_integer: int | None = None
+        value_text: str | None = None
+        # This stores the set of links we have to create from this property.
         create_link_set: Set[str] = set()
-        if cls_prop.type == PropertyType.PROP_RICH_TEXT:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+        # Dispatch on the type of the class property
+        if prop_value is not None:
+            if cls_prop.type == PropertyType.PROP_RICH_TEXT:
                 assert isinstance(prop_value, str)
                 # The value should be a JSON string of a ProseMirror document.
                 doc: CTDocument = parse_document(json.loads(prop_value))
@@ -931,60 +452,105 @@ def new_object_endpoint():
                 json_string: str = json.dumps(json_value)
                 # Set the values
                 value_text = json_string
-                value_file = None
                 # Find the set of links to create
                 create_link_set: Set[str] = extract_links(doc)
-        elif cls_prop.type == PropertyType.PROP_FILE:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+            elif cls_prop.type == PropertyType.PROP_FILE:
                 # The value should be an integer ID of a file.
                 assert isinstance(prop_value, int)
                 # Find the file with this ID
-                if not file_exists(conn, prop_value):
+                if not db.file_exists(prop_value):
                     raise CTError(
                         "File Not Found",
                         f"The file with the ID '{prop_value}' was not found in the database.",
                     )
                 # Set the values
-                value_text = None
-                value_file = prop_value
-        else:
-            raise CTError(
-                "Unknown Property Type",
-                f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
-            )
+                value_integer = prop_value
+            elif cls_prop.type == PropertyType.PROP_BOOLEAN:
+                # The value should be a boolean value.
+                assert isinstance(prop_value, bool)
+                # Set the value
+                value_integer = int(prop_value)
+            elif cls_prop.type == PropertyType.PROP_SELECT:
+                # The value should be a string value.
+                assert isinstance(prop_value, str)
+                # The value should be part of the class property's select list
+                if not prop_value in cls_prop.select_options:
+                    raise CTError(
+                        "Invalid Option",
+                        f"The string '{prop_value}' is not part of the valid options for this property.",
+                    )
+                # Set the value
+                value_text = prop_value
+            elif cls_prop.type == PropertyType.PROP_LINK:
+                # The value should be the title of an object.
+                assert isinstance(prop_value, str)
+                linked_title: str = prop_value
+                linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                if linked_obj is not None:
+                    value_text = linked_title
+                    create_link_set = {linked_title}
+                else:
+                    # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                    raise object_not_found(linked_title)
+            elif cls_prop.type == PropertyType.PROP_LINKS:
+                # The value should be an array of object titles
+                assert isinstance(prop_value, list)
+                linked_titles: Set[str] = set(prop_value)
+                for linked_title in linked_titles:
+                    assert isinstance(linked_titles, str)
+                    linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                    if linked_obj is None:
+                        # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                        raise object_not_found(linked_title)
+                value_text = ";".join(list(linked_titles))
+                create_link_set = linked_titles
+            else:
+                raise CTError(
+                    "Unknown Property Type",
+                    f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
+                )
         # Create the property in the database, and the initial property change object.
-        prop_id: int = create_property(
-            conn=conn,
+        prop_id: int = db.create_property(
             class_prop_id=cls_prop.id,
             class_prop_title=prop_title,
             class_prop_type=cls_prop.type,
             object_id=object_id,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
-        create_property_change(
-            conn=conn,
+        db.create_property_change(
             object_id=object_id,
             prop_id=prop_id,
             prop_title=prop_title,
             created_at=created_at,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
         # Create links from this property to other objects
         for link_title in create_link_set:
-            links_to: Optional[ObjectRec] = get_object_by_title(conn, link_title)
+            links_to: Optional[ObjectRec] = db.get_object_by_title(link_title)
             if links_to is not None:
-                create_link(
-                    conn=conn,
+                db.create_link(
                     from_object_id=object_id,
                     from_property_id=prop_id,
                     to_object_id=links_to.id,
                 )
+            else:
+                db.create_dangling_link(
+                    from_object_id=object_id,
+                    from_property_id=prop_id,
+                    to_object_title=link_title,
+                )
+    # If there are any dangling links to this object, delete them and replace them with real links.
+    for link in db.get_dangling_links_to_title(to_object_title=title):
+        # Create the actual link
+        db.create_link(
+            from_object_id=link.from_object_id,
+            from_property_id=link.from_property_id,
+            to_object_id=object_id,
+        )
+        # Delete the dangling link
+        db.delete_dangling_link(link.id)
     # Return
     obj: ObjectRec = ObjectRec(
         id=object_id,
@@ -1006,42 +572,34 @@ def new_object_endpoint():
 def list_objects_endpoint():
     return {
         "error": None,
-        "data": [obj.to_json() for obj in list_objects(get_db())],
+        "data": [obj.to_json() for obj in get_db().list_objects()],
     }
 
 
 @bp.route("/api/objects/<path:title>", methods=["GET"])
 def object_details(title: str):
-    conn: Connection = get_db()
-    obj: Optional[ObjectRec] = get_object_by_title(conn, title)
+    db: Database = get_db()
+    obj: Optional[ObjectRec] = db.get_object_by_title(title)
     if obj is not None:
-        obj_dict: dict = obj.to_json()
-        props: List[PropertyRec] = list_object_properties(conn=conn, object_id=obj.id)
-        obj_dict["properties"] = [prop.to_json() for prop in props]
-        obj_dict["links"] = [
-            link.to_json() for link in get_links_to_object(conn, obj.id)
-        ]
         return {
             "error": None,
-            "data": obj_dict,
+            "data": ObjectDetailRec(
+                obj=obj,
+                props=db.list_object_properties(obj.id),
+                links=db.get_links_to_object(obj.id),
+            ).to_json(),
         }
     else:
-        raise CTError(
-            "Object Not Found",
-            f"The object with the title '{title}' was not found in the database.",
-        )
+        raise object_not_found(title)
 
 
 @bp.route("/api/objects/<path:title>", methods=["POST"])
 def edit_object_endpoint(title: str):
     # Retrieve the object
-    conn: Connection = get_db()
-    obj: Optional[ObjectRec] = get_object_by_title(conn, title)
+    db: Database = get_db()
+    obj: Optional[ObjectRec] = db.get_object_by_title(title)
     if obj is None:
-        raise CTError(
-            "Object Not Found",
-            f"The object with the title '{title}' was not found in the database.",
-        )
+        raise object_not_found(title)
     # Parse the input
     form: dict = request.json
     new_title: str = form["title"].strip()
@@ -1052,21 +610,17 @@ def edit_object_endpoint(title: str):
 
     # Find the directory, if any
     if new_directory_id is not None:
-        if not directory_exists(conn, new_directory_id):
-            raise CTError(
-                "Directory Not Found",
-                f"The directory with the ID '{id}' was not found in the database.",
-            )
+        if not db.directory_exists(new_directory_id):
+            raise directory_not_found(new_directory_id)
 
     # Find the set of class properties
-    cls_props: List[ClassPropertyRec] = get_class_properties(conn, obj.class_id)
+    cls_props: List[ClassPropRec] = db.get_class_properties(obj.class_id)
 
     # Mark modification time
     modified_at: int = now_millis()
 
     # Edit the object
-    update_object(
-        conn=conn,
+    db.update_object(
         obj=obj,
         new_title=new_title,
         new_directory_id=new_directory_id,
@@ -1078,28 +632,24 @@ def edit_object_endpoint(title: str):
     # Change the provided values
     for prop_title, prop_value in property_values.items():
         # Find the corresponding class property
-        cls_prop: ClassPropertyRec = [
+        cls_prop: ClassPropRec = [
             prop for prop in cls_props if prop.title == prop_title
         ][0]
         # Find the existing property
-        existing_prop: Optional[PropertyRec] = get_object_property(
-            conn=conn, object_id=obj.id, class_prop_id=cls_prop.id
+        existing_prop: Optional[PropRec] = db.get_object_property(
+            object_id=obj.id, class_prop_id=cls_prop.id
         )
         if existing_prop is None:
             raise CTError(
                 "No Existing Property",
-                f"Can't edit a property that doens't exist: '{prop_title}', which has type '{cls_prop.type}'.",
+                f"Can't edit a property that does not exist: '{prop_title}', which has type '{cls_prop.type}'.",
             )
         # Dispatch on the type of the class property
-        value_text: Optional[str]
-        value_file: Optional[int]
+        value_integer: int | None = None
+        value_text: str | None = None
         create_link_set: Set[str] = set()
-        if cls_prop.type == PropertyType.PROP_RICH_TEXT:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+        if prop_value is not None:
+            if cls_prop.type == PropertyType.PROP_RICH_TEXT:
                 assert isinstance(prop_value, str)
                 # The value should be a JSON string of a ProseMirror document.
                 doc: CTDocument = parse_document(json.loads(prop_value))
@@ -1108,61 +658,93 @@ def edit_object_endpoint(title: str):
                 json_string: str = json.dumps(json_value)
                 # Set the values
                 value_text = json_string
-                value_file = None
                 create_link_set = extract_links(doc)
-        elif cls_prop.type == PropertyType.PROP_FILE:
-            if prop_value is None:
-                # Make this value unbound.
-                value_text = None
-                value_file = None
-            else:
+            elif cls_prop.type == PropertyType.PROP_FILE:
                 # The value should be an integer ID of a file.
                 assert isinstance(prop_value, int)
                 # Find the file with this ID
-                if not file_exists(conn, prop_value):
-                    raise CTError(
-                        "File Not Found",
-                        f"The file with the ID '{prop_value}' was not found in the database.",
-                    )
+                if not db.file_exists(prop_value):
+                    raise file_not_found(prop_value)
                 # Set the values
-                value_text = None
                 value_file = prop_value
-        else:
-            raise CTError(
-                "Unknown Property Type",
-                f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
-            )
+            elif cls_prop.type == PropertyType.PROP_BOOLEAN:
+                # The value should be a boolean value.
+                assert isinstance(prop_value, bool)
+                # Set the value
+                value_integer = int(prop_value)
+            elif cls_prop.type == PropertyType.PROP_SELECT:
+                # The value should be a string value.
+                assert isinstance(prop_value, str)
+                # The value should be part of the class property's select list
+                if not prop_value in cls_prop.select_options:
+                    raise CTError(
+                        "Invalid Option",
+                        f"The string '{prop_value}' is not part of the valid options for this property.",
+                    )
+                # Set the value
+                value_text = prop_value
+            elif cls_prop.type == PropertyType.PROP_LINK:
+                # The value should be the title of an object.
+                assert isinstance(prop_value, str)
+                linked_title: str = prop_value
+                linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                if linked_obj is not None:
+                    value_text = linked_title
+                    create_link_set = {linked_title}
+                else:
+                    # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                    raise object_not_found(linked_title)
+            elif cls_prop.type == PropertyType.PROP_LINKS:
+                # The value should be an array of object titles
+                assert isinstance(prop_value, list)
+                linked_titles: Set[str] = set(prop_value)
+                for linked_title in linked_titles:
+                    assert isinstance(linked_titles, str)
+                    linked_obj: ObjectRec | None = db.get_object_by_title(linked_title)
+                    if linked_obj is None:
+                        # The linked object does not exist. This is an error: dangling links are only allowed in text.
+                        raise object_not_found(linked_title)
+                value_text = ";".join(list(linked_titles))
+                create_link_set = linked_titles
+            else:
+                raise CTError(
+                    "Unknown Property Type",
+                    f"I don't know what to do with the property '{prop_title}', which has type '{cls_prop.type}'.",
+                )
         # Edit the property
-        edit_property(
-            conn=conn,
+        db.edit_property(
             property_id=existing_prop.id,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
         # Create the property change
-        create_property_change(
-            conn=conn,
+        db.create_property_change(
             object_id=obj.id,
             prop_id=existing_prop.id,
             prop_title=prop_title,
             created_at=modified_at,
+            value_integer=value_integer,
             value_text=value_text,
-            value_file=value_file,
         )
         # Delete old links from this property to any other object
-        delete_links_from(conn=conn, property_id=existing_prop.id)
+        db.delete_links_from(property_id=existing_prop.id)
         # Create new links from this property
         for link_title in create_link_set:
-            links_to: Optional[ObjectRec] = get_object_by_title(conn, link_title)
+            links_to: Optional[ObjectRec] = db.get_object_by_title(link_title)
             if links_to is not None:
-                create_link(
-                    conn=conn,
+                db.create_link(
                     from_object_id=obj.id,
                     from_property_id=existing_prop.id,
                     to_object_id=links_to.id,
                 )
+            else:
+                db.create_dangling_link(
+                    from_object_id=obj.id,
+                    from_property_id=existing_prop.id,
+                    to_object_title=link_title,
+                )
     # Return
-    obj: Optional[ObjectRec] = get_object_by_title(conn, new_title)
+    obj: Optional[ObjectRec] = db.get_object_by_title(new_title)
     assert obj is not None
     return {
         "data": obj.to_json(),
@@ -1173,19 +755,16 @@ def edit_object_endpoint(title: str):
 @bp.route("/api/objects/<path:title>", methods=["DELETE"])
 def delete_object_endpoint(title: str):
     # Retrieve the object
-    conn: Connection = get_db()
-    obj: Optional[ObjectRec] = get_object_by_title(conn, title)
-    if obj is None:
-        raise CTError(
-            "Object Not Found",
-            f"The object with the title '{title}' was not found in the database.",
-        )
-    else:
-        delete_object(conn, obj.id)
+    db: Database = get_db()
+    obj: ObjectRec | None = db.get_object_by_title(title)
+    if obj is not None:
+        db.delete_object(obj.id)
         return {
             "data": None,
             "error": None,
         }
+    else:
+        raise object_not_found(title)
 
 
 @bp.route("/api/object-search", methods=["POST"])
@@ -1195,7 +774,7 @@ def object_search_endpoint():
     query: str = form["query"].strip()
     # Return results
     return {
-        "data": [obj.to_json() for obj in search_objects(conn=get_db(), query=query)],
+        "data": [obj.to_json() for obj in get_db().search_objects(query=query)],
         "error": None,
     }
 
@@ -1270,7 +849,7 @@ def millis_to_datetime(millis: int) -> datetime:
 
 def determine_mime_type(blob: bytes) -> str:
     """
-    Determine the MIME type of a byte stream.
+    Determine the MIME-type of a byte stream.
     """
     # Write the contents to a temporary file
     stream = tempfile.NamedTemporaryFile()

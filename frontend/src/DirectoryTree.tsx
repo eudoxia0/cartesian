@@ -15,6 +15,8 @@ interface TreeNode {
     droppable: boolean;
     data: {
         icon_emoji: string;
+        cover_id: number | null;
+        created_at: number;
     }
 }
 
@@ -28,6 +30,8 @@ function asTree(dir: DirectoryRec): TreeNode {
         droppable: true,
         data: {
             icon_emoji: dir.icon_emoji,
+            cover_id: dir.cover_id,
+            created_at: dir.created_at,
         }
     }
 }
@@ -37,7 +41,9 @@ function fromTree(tree: TreeNode): DirectoryRec {
         id: tree.id,
         title: tree.text,
         icon_emoji: tree.data.icon_emoji,
+        cover_id: tree.data.cover_id,
         parent_id: (tree.parent === ROOT_ID) ? null : tree.parent,
+        created_at: tree.data.created_at,
     }
 }
 
@@ -72,7 +78,8 @@ export default function DirectoryTree() {
 
 
     function handleDrop(newTreeData: Array<TreeNode>) {
-        newTreeData.forEach((tree: TreeNode) =>
+        newTreeData.forEach((tree: TreeNode) => {
+            const dir: DirectoryRec = fromTree(tree);
             fetch(`/api/directories/${tree.id}`,
                 {
                     headers: {
@@ -81,9 +88,9 @@ export default function DirectoryTree() {
                     },
                     method: "POST",
                     body: JSON.stringify({
-                        "title": tree.text,
-                        "parent_id": tree.parent,
-                        "icon_emoji": tree.data.icon_emoji,
+                        "title": dir.title,
+                        "parent_id": dir.parent_id,
+                        "icon_emoji": dir.icon_emoji,
                     })
                 }
             )
@@ -95,7 +102,7 @@ export default function DirectoryTree() {
                         dispatch(replaceDirectoryList(newTreeData.map(fromTree)));
                     }
                 })
-        );
+        });
     }
 
     function handleAddToplevelDirectory(event: MouseEvent<HTMLButtonElement>) {
@@ -181,8 +188,6 @@ export default function DirectoryTree() {
     function handleDeleteDirectory(dirId: number) {
         setShowEdit(false);
         const dir = editDir!;
-        const newTitle = editTitle;
-        const newEmoji = editEmoji;
         setEditDir(null);
         setEditTitle("");
         setEditEmoji("");

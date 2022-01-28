@@ -6,28 +6,25 @@ from sqlite3 import Cursor
 
 from flask import g, current_app
 
+from theatre.new_db import Database
 
-def get_db():
+
+def get_db() -> Database:
     if "db" not in g:
         path: str = current_app.config["DB_PATH"]
-        g.db = sqlite3.connect(path)
-        cur: Cursor = g.db.cursor()
-        cur.execute("pragma foreign_keys=on;")
-        g.db.commit()
-        g.db.row_factory = sqlite3.Row
+        g.db = Database.connect(database_path=path)
     return g.db
 
 
 def close_db(e=None):
-    db = g.pop("db", None)
+    db: Database | None = g.pop("db", None)
 
     if db is not None:
         db.close()
 
 
 def init_db():
-    db = get_db()
-
+    db: Database = get_db()
     with current_app.open_resource("schema.sql") as f:
         sql = f.read().decode("utf8")
-        db.executescript(sql)
+        db.create_schema(sql)

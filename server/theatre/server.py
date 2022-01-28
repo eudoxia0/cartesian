@@ -28,7 +28,7 @@ from flask import (
 
 from werkzeug.utils import secure_filename
 
-from theatre.new_db import (
+from theatre.db import (
     Database,
     FileRec,
     DirRec,

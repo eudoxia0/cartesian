@@ -6,7 +6,7 @@ from sqlite3 import Cursor
 
 from flask import g, current_app
 
-from theatre.new_db import Database
+from theatre.db import Database
 
 
 def get_db() -> Database:

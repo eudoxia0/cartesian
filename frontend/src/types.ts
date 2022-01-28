@@ -48,8 +48,7 @@ export interface PropValueRec {
     class_prop_id: number;
     class_prop_title: string;
     class_prop_type: PropType;
-    value_text: string | null;
-    value_file: number | null;
+    value: string | number | boolean | Array<string> | null;
 }
 
 export interface LinkRec {

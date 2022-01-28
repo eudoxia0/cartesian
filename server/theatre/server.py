@@ -568,7 +568,9 @@ def object_details(title: str):
         return {
             "error": None,
             "data": ObjectDetailRec(
-                obj=obj, props=db.list_object_properties(obj.id)
+                obj=obj,
+                props=db.list_object_properties(obj.id),
+                links=db.get_links_to_object(obj.id),
             ).to_json(),
         }
     else:

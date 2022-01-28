@@ -535,6 +535,12 @@ def new_object_endpoint():
                     from_property_id=prop_id,
                     to_object_id=links_to.id,
                 )
+            else:
+                db.create_dangling_link(
+                    from_object_id=object_id,
+                    from_property_id=prop_id,
+                    to_object_title=link_title,
+                )
     # Return
     obj: ObjectRec = ObjectRec(
         id=object_id,

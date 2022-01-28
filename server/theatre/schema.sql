@@ -111,7 +111,7 @@ create table properties (
     foreign key (class_prop_id) references class_props(id) on update cascade on delete cascade,
     constraint non_empty_class_prop_title check (class_prop_title <> ''),
     constraint valid_class_prop_type check (class_prop_type in (0, 1, 2, 3, 4, 5)),
-    foreign key (object_id) references objects(id) on update cascade on delete cascade,
+    foreign key (object_id) references objects(id) on update cascade on delete cascade
 );
 
 create virtual table properties_fts using fts5 (
@@ -166,7 +166,7 @@ create table property_changes (
     foreign key (object_id) references objects(id) on update cascade on delete cascade,
     foreign key (prop_id) references properties(id) on update cascade on delete set null,
     constraint non_empty_prop_title check (prop_title <> ''),
-    constraint positive_created_at check(created_at > 0),
+    constraint positive_created_at check(created_at > 0)
 );
 
 create table links (

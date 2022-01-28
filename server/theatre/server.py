@@ -266,7 +266,7 @@ def get_class_endpoint(cls_id: int):
     cls: ClassRec | None = db.get_class(cls_id)
     if cls is not None:
         return {
-            "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)),
+            "data": ClassDetailRec(cls=cls, props=db.get_class_properties(cls.id)).to_json(),
             "error": None,
         }
     else:
@@ -311,7 +311,7 @@ def new_class_property_endpoint(cls_id: int):
         title: str = form["title"].strip()
         prop_ty: PropertyType = PropertyType(form["type"])
         description: str = form["description"].strip()
-        select_options: List[str] = form["select_options"].trim().split(",")
+        select_options: List[str] = form["select_options"]
         rec: ClassPropRec = db.create_class_property(
             class_id=cls_id,
             title=title,

@@ -29,7 +29,7 @@ export default function IconWidget(props: Props) {
     }
 
     return (
-        <div >
+        <div className={styles.container}>
             <div onClick={() => setShow(!show)}>
                 {currentEmoji ? <Emoji emoji={currentEmoji} size={props.size} native={true} /> : <Placeholder size={props.size} />}
             </div>

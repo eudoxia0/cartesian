@@ -27,6 +27,7 @@ def parse_block_node(json: dict):
         "code_block": parse_code_block,
         "blockquote": parse_block_quote,
         "math_display": parse_math_block,
+        "file_embed": parse_file_block,
     }
     return parsers[json["type"]](json)
 
@@ -64,6 +65,9 @@ def parse_block_quote(json: dict) -> BlockQuote:
 def parse_math_block(json: dict) -> MathBlock:
     return MathBlock(contents="".join([node["text"] for node in json["content"]]))
 
+def parse_file_block(json: dict) -> FileBlock:
+    attrs: dict = json["attrs"]
+    return FileBlock(id=attrs["file_id"], filename=attrs["filename"], mime_type=attrs["mime_type"])
 
 # Parsing fragments
 

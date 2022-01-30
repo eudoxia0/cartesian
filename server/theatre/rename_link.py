@@ -25,15 +25,17 @@ def rn_block(block: BlockNode, old_title: str, new_title: str) -> BlockNode:
             children=[rn_item(elem, old_title, new_title) for elem in block.children]
         )
     elif isinstance(block, HorizontalRule):
-        return HorizontalRule()
+        return block
     elif isinstance(block, CodeBlock):
-        return CodeBlock(contents=block.contents)
+        return block
     elif isinstance(block, BlockQuote):
         return BlockQuote(
             children=[rn_block(elem, old_title, new_title) for elem in block.children]
         )
     elif isinstance(block, MathBlock):
-        return MathBlock(contents=block.contents)
+        return block
+    elif isinstance(block, FileBlock):
+        return block
     else:
         raise CTError("Unknown Block Node", "Unknown block node type.")
 

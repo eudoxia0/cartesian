@@ -65,9 +65,13 @@ def parse_block_quote(json: dict) -> BlockQuote:
 def parse_math_block(json: dict) -> MathBlock:
     return MathBlock(contents="".join([node["text"] for node in json["content"]]))
 
+
 def parse_file_block(json: dict) -> FileBlock:
     attrs: dict = json["attrs"]
-    return FileBlock(id=attrs["file_id"], filename=attrs["filename"], mime_type=attrs["mime_type"])
+    return FileBlock(
+        id=attrs["file_id"], filename=attrs["filename"], mime_type=attrs["mime_type"]
+    )
+
 
 # Parsing fragments
 
@@ -155,6 +159,15 @@ def emit_block(block: BlockNode) -> dict:
         return {
             "type": "math_display",
             "content": [{"type": "text", "text": block.contents}],
+        }
+    elif isinstance(block, FileBlock):
+        return {
+            "type": "file_embed",
+            "attrs": {
+                "file_id": block.id,
+                "filename": block.filename,
+                "mime_type": block.mime_type,
+            },
         }
     else:
         raise CTError("Unknown Block Node", "Unknown block node type.")

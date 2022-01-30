@@ -2,7 +2,7 @@ import { useProseMirror, ProseMirror } from 'use-prosemirror';
 import { createSchema, createPlugins } from "./prosemirror";
 import { Fragment, Node, Slice } from "prosemirror-model";
 import { useNavigate } from 'react-router-dom';
-import { EditorView } from "prosemirror-view";
+import { EditorView, Decoration, NodeView } from "prosemirror-view";
 
 const HTTP_LINK_REGEX = /\bhttps?:\/\/[\w_\-#\/\.]+/g
 let linkify = function (fragment: Fragment): Fragment {
@@ -80,7 +80,48 @@ export default function Editor(props: Props) {
                 const title: string = node.title;
                 onLinkClick(title);
             }
-            return false;
+            return true;
         }}
+        nodeViews={
+            {
+                checkbox: (node: Node, view: EditorView, getPos: () => number, decorations: Decoration[]): NodeView => {
+                    const dom = document.createElement("checkbox");
+                    const checkbox = document.createElement("input");
+
+                    checkbox.type = "checkbox";
+                    checkbox.contentEditable = "false";
+                    checkbox.addEventListener("change", event => {
+                        const { checked } = event.target as any;
+
+                        if (typeof getPos === "function") {
+                            view.dispatch(
+                                view.state.tr.setNodeMarkup(getPos(), undefined, {
+                                    checked
+                                })
+                            );
+                        }
+                    });
+
+                    if (node.attrs.checked) {
+                        checkbox.setAttribute("checked", "checked");
+                    }
+
+                    dom.append(checkbox);
+
+                    return {
+                        dom,
+                        update: updatedNode => {
+                            if (updatedNode.attrs.checked) {
+                                checkbox.setAttribute("checked", "checked");
+                            } else {
+                                checkbox.removeAttribute("checked");
+                            }
+
+                            return true;
+                        }
+                    };
+                },
+            }
+        }
     />;
 }

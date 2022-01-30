@@ -73,6 +73,7 @@ def parse_fragment(json: dict):
         "text": parse_text,
         "wikilinknode": parse_wiki_link,
         "math_inline": parse_inline_math,
+        "checkbox": parse_checkbox,
     }
     return parsers[json["type"]](json)
 
@@ -101,6 +102,10 @@ def parse_wiki_link(json: dict) -> InternalLinkFragment:
 
 def parse_inline_math(json: dict) -> MathFragment:
     return MathFragment(contents="".join([node["text"] for node in json["content"]]))
+
+
+def parse_checkbox(json: dict) -> CheckboxFragment:
+    return CheckboxFragment(checked=json["attrs"]["checked"])
 
 
 #
@@ -180,6 +185,13 @@ def emit_frag(frag: InlineFragment) -> dict:
             "type": "text",
             "text": frag.url,
             "marks": [{"type": "link", "attrs": {"href": frag.url}}],
+        }
+    elif isinstance(frag, CheckboxFragment):
+        return {
+            "type": "checkbox",
+            "attrs": {
+                "checked": frag.checked,
+            },
         }
     else:
         raise CTError("Unknown Inline Fragment", "Unknown inline fragment type.")

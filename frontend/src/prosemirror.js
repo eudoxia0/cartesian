@@ -102,6 +102,20 @@ export function createSchema() {
                 }
             }]
         },
+
+        checkbox: {
+            inline: true,
+            group: "inline",
+            attrs: {
+                checked: false,
+            },
+            draggable: false,
+            atom: true,
+            parseDOM: [{ tag: "checkbox" }],
+            toDOM() {
+                return ["checkbox"];
+            },
+        },
     };
 
     baseNodes = Object.assign({}, baseNodes, tableNodes({}));

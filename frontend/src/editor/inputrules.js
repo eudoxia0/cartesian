@@ -1,6 +1,6 @@
 import {
   inputRules, wrappingInputRule, textblockTypeInputRule,
-  smartQuotes, emDash, ellipsis
+  smartQuotes, emDash, ellipsis, InputRule
 } from "prosemirror-inputrules";
 
 // : (NodeType) → InputRule
@@ -43,6 +43,19 @@ export function headingRule(nodeType, maxLevel) {
     nodeType, match => ({ level: match[1].length }));
 }
 
+function handleInsertCheckbox(nodeType) {
+  return (state, _, start, end) => {
+    let tr = state.tr;
+    tr = tr.delete(start, end);
+    tr = tr.insert(start - 1, nodeType.create({ checked: false }));
+    return tr;
+  };
+}
+
+export function checkBoxRule(nodeType) {
+  return new InputRule(/\[\]$/, handleInsertCheckbox(nodeType));
+}
+
 // : (Schema) → Plugin
 // A set of input rules for creating the basic block quotes, lists,
 // code blocks, and heading.
@@ -53,5 +66,6 @@ export function buildInputRules(schema) {
   if (type = schema.nodes.bullet_list) rules.push(bulletListRule(type));
   if (type = schema.nodes.code_block) rules.push(codeBlockRule(type));
   if (type = schema.nodes.heading) rules.push(headingRule(type, 6));
+  if (type = schema.nodes.checkbox) rules.push(checkBoxRule(type));
   return inputRules({ rules });
 }

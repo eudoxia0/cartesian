@@ -13,6 +13,7 @@ InlineFragment = Union[
     "MathFragment",
     "InternalLinkFragment",
     "WebLinkFragment",
+    "CheckboxFragment",
 ]
 
 
@@ -53,6 +54,15 @@ class WebLinkFragment:
     """
 
     url: str
+
+
+@dataclass
+class CheckboxFragment:
+    """
+    Represents a checkbox.
+    """
+
+    checked: bool
 
 
 #

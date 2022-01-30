@@ -83,3 +83,14 @@ tr:last-child td {
 a {
     color: blue;
 }
+
+/* ProseMirror */
+
+.file-embed-container {
+    max-width: 100%;
+}
+
+.file-embed-container img {
+    max-width: 100%;
+    display: block;
+}

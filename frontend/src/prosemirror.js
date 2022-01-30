@@ -7,6 +7,46 @@ import { addListNodes } from "prosemirror-schema-list";
 import { tableNodes } from "prosemirror-tables";
 import { exampleSetup } from "./editor";
 
+const image_mime_types = ["image/bmp", "image/gif", "image/jpeg", "image/png", "image/tiff", "image/webp"];
+
+function isMimeType(list, mime_type) {
+    return list.some(elem => mime_type.startsWith(elem));
+}
+
+function makeFilePreview(file_id, mime_type) {
+    if (isMimeType(image_mime_types, mime_type)) {
+        return [
+            "img",
+            { "src": `/api/files/${file_id}/contents` },
+        ];
+    } else {
+        return [
+            "span",
+            {},
+            "No preview available."
+        ];
+    }
+}
+
+function makeFileEmbed(file_id, filename, mime_type) {
+    return [
+        "div",
+        { "class": "file-embed-container" },
+        [
+            "div", { "class": "file-embed-preview" },
+            makeFilePreview(file_id, mime_type),
+        ],
+        [
+            "a",
+            { "href": `/files/${file_id}/` },
+            [
+                "div", { "class": "file-embed-label" },
+                `File: ${filename}`,
+            ],
+        ],
+    ];
+}
+
 export function createSchema() {
     let blockquoteDOM = ["blockquote", 0];
     let hrDOM = ["hr"];
@@ -116,6 +156,40 @@ export function createSchema() {
                 return ["checkbox"];
             },
         },
+
+        file_embed: {
+            group: "block",
+            attrs: {
+                file_id: {},
+                filename: {},
+                mime_type: {},
+            },
+            draggable: false,
+            parseDOM: [
+                {
+                    tag: "file-embed", getAttrs(dom) {
+                        return {
+                            file_id: dom.getAttribute("file-id"),
+                            filename: dom.getAttribute("filename"),
+                            mime_type: dom.getAttribute("mime-type"),
+                        };
+                    }
+                }
+            ],
+            toDOM(node) {
+                let { file_id, filename, mime_type } = node.attrs;
+                let child = makeFileEmbed(file_id, filename, mime_type);
+                return [
+                    "file-embed",
+                    {
+                        "file-id": file_id,
+                        "filename": filename,
+                        "mime-type": mime_type
+                    },
+                    child,
+                ];
+            }
+        }
     };
 
     baseNodes = Object.assign({}, baseNodes, tableNodes({}));
@@ -199,5 +273,5 @@ export function createSchema() {
 }
 
 export function createPlugins(schema) {
-    return exampleSetup({ schema: schema, menuBar: false });
+    return exampleSetup({ schema: schema, menuBar: true });
 }

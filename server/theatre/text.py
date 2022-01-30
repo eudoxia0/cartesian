@@ -78,6 +78,7 @@ BlockNode = Union[
     "CodeBlock",
     "BlockQuote",
     "MathBlock",
+    "FileBlock",
 ]
 
 
@@ -150,6 +151,17 @@ class MathBlock:
     """
 
     contents: str
+
+
+@dataclass
+class FileBlock:
+    """
+    Represents an embedded file block.
+    """
+
+    id: int
+    filename: str
+    mime_type: str
 
 
 #

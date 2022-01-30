@@ -40,6 +40,8 @@ def extract_block_links(block: BlockNode) -> Set[str]:
         return set.union(*[extract_block_links(elem) for elem in block.children])
     elif isinstance(block, MathBlock):
         return set()
+    elif isinstance(block, FileBlock):
+        return set()
     else:
         raise CTError("Unknown Block Node", "Unknown block node type.")
 

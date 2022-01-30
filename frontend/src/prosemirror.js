@@ -269,5 +269,5 @@ export function createSchema() {
 }
 
 export function createPlugins(schema) {
-    return exampleSetup({ schema: schema, menuBar: false });
+    return exampleSetup({ schema: schema, menuBar: true });
 }

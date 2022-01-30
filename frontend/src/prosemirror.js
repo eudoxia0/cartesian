@@ -37,8 +37,12 @@ function makeFileEmbed(file_id, filename, mime_type) {
             makeFilePreview(file_id, mime_type),
         ],
         [
-            "div", { "class": "file-embed-label" },
-            `File: ${filename}`,
+            "a",
+            { "href": `/files/${file_id}/` },
+            [
+                "div", { "class": "file-embed-label" },
+                `File: ${filename}`,
+            ],
         ],
     ];
 }

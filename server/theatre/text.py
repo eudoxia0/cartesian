@@ -152,6 +152,7 @@ class MathBlock:
 
     contents: str
 
+
 @dataclass
 class FileBlock:
     """

@@ -261,6 +261,7 @@ export default function DirectoryTree() {
                 placeholderRender={(node, { depth }) => (
                     <CustomPlaceholder node={node} depth={depth} />
                 )}
+                initialOpen={true}
             />
             <div className={styles.dir} style={{ marginLeft: 20, marginTop: 20 }}>
                 <img src="/blue-folder.png" alt="" />

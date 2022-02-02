@@ -1,4 +1,14 @@
 .container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.leftPane {
+    flex: 1;
+
     margin: 50px;
     display: inline-block;
     min-width: 1200px;
@@ -140,5 +150,24 @@
     background: transparent;
     border-radius: 10px;
     font-size: 1rem;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.rightPane {
+    border-left: 1px solid #ccc;
+    box-shadow: -2px 0px 5px 1px #d1d1d1;
+
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.linkedBy {
+    padding: 15px 30px;
+}
+
+.linkedBy h2 {
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }

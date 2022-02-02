@@ -161,102 +161,106 @@ export default function ObjectEdit(props: Props) {
 
     return (
         <div className={styles.container}>
-            <div className={styles.box}>
-                {
-                    coverFile ?
-                        <div className={styles.coverContainer}>
-                            <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
-                        </div>
-                        :
-                        (props.obj.cover_id ?
-                            <div className={styles.coverContainer}>
-                                <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
-                            </div>
-                            : <span></span>)
-                }
-                <div className={styles.titleContainer}>
-                    <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
-                    <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
-                </div>
-                <div className={styles.menuBar}>
-                    <div className={styles.directoryContainer}>
-                        In directory: <DirectorySelect initialValue={dirId} onChange={handleDirectoryChange} />
-                    </div>
-                    <div className={styles.spacer}></div>
-                    <div className={styles.menuRest}>
-                        <img src="/image.png" alt="" onClick={() => setShowCoverModal(true)} />
-                        <img src="/bin-metal.png" alt="" onClick={handleDelete} />
-                    </div>
-                </div>
-                <div>
-                    <table className={styles.properties}>
-                        <tbody>
-                            {
-                                props.obj.properties.map((propval: PropValueRec) =>
-                                    <tr className={styles.property} key={propval.id}>
-                                        <td className={styles.propTitle}>
-                                            {propval.class_prop_title}
-                                        </td>
-                                        <td className={styles.propValue}>
-                                            {renderValue(propval)}
-                                        </td>
-                                    </tr>
-                                )
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                <div className={styles.metadata}>
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td className={styles.label}>
-                                    Created at
-                                </td>
-                                <td className={styles.value}>
-                                    {humanizeDate(props.obj.created_at)}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className={styles.label}>
-                                    Modified at
-                                </td>
-                                <td className={styles.value}>
-                                    {humanizeDate(props.obj.modified_at)}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div>
-                Linked By:
-                <ul>
+            <div className={styles.leftPane}>
+                <div className={styles.box}>
                     {
-                        props.obj.links.map((link: LinkRec) => {
-                            return (
-                                <li key={link.title}>
-                                    <span onClick={_ => goTo(`/objects/${link.title}`)}>
-                                        {link.title}
-                                    </span>
-                                </li>
-                            );
-                        })
+                        coverFile ?
+                            <div className={styles.coverContainer}>
+                                <img src={`/api/files/${coverFile.id}/contents`} alt="Object cover" />
+                            </div>
+                            :
+                            (props.obj.cover_id ?
+                                <div className={styles.coverContainer}>
+                                    <img src={`/api/files/${props.obj.cover_id}/contents`} alt="Object cover" />
+                                </div>
+                                : <span></span>)
                     }
-                </ul>
-            </div>
-            <button className={styles.button} onClick={handleSave}>Save</button>
-            <Modal
-                title="Change Cover"
-                visibility={showCoverModal}
-                body={
-                    <div>
-                        <FileUploadWidget onSuccess={f => setCoverFile(f)} />
+                    <div className={styles.titleContainer}>
+                        <IconWidget size={44} initialEmoji={emoji} onChange={handleEmojiChange} />
+                        <input className={styles.title} type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
-                }
-                onDecline={() => setShowCoverModal(false)}
-                onAccept={handleChangeCover}
-            />
-        </div >
+                    <div className={styles.menuBar}>
+                        <div className={styles.directoryContainer}>
+                            In directory: <DirectorySelect initialValue={dirId} onChange={handleDirectoryChange} />
+                        </div>
+                        <div className={styles.spacer}></div>
+                        <div className={styles.menuRest}>
+                            <img src="/image.png" alt="" onClick={() => setShowCoverModal(true)} />
+                            <img src="/bin-metal.png" alt="" onClick={handleDelete} />
+                        </div>
+                    </div>
+                    <div>
+                        <table className={styles.properties}>
+                            <tbody>
+                                {
+                                    props.obj.properties.map((propval: PropValueRec) =>
+                                        <tr className={styles.property} key={propval.id}>
+                                            <td className={styles.propTitle}>
+                                                {propval.class_prop_title}
+                                            </td>
+                                            <td className={styles.propValue}>
+                                                {renderValue(propval)}
+                                            </td>
+                                        </tr>
+                                    )
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className={styles.metadata}>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td className={styles.label}>
+                                        Created at
+                                    </td>
+                                    <td className={styles.value}>
+                                        {humanizeDate(props.obj.created_at)}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className={styles.label}>
+                                        Modified at
+                                    </td>
+                                    <td className={styles.value}>
+                                        {humanizeDate(props.obj.modified_at)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <button className={styles.button} onClick={handleSave}>Save</button>
+                <Modal
+                    title="Change Cover"
+                    visibility={showCoverModal}
+                    body={
+                        <div>
+                            <FileUploadWidget onSuccess={f => setCoverFile(f)} />
+                        </div>
+                    }
+                    onDecline={() => setShowCoverModal(false)}
+                    onAccept={handleChangeCover}
+                />
+            </div>
+            <div className={styles.rightPane}>
+                <div className={styles.linkedBy}>
+                    <h2>Linked By</h2>
+                    <ul>
+                        {
+                            props.obj.links.map((link: LinkRec) => {
+                                return (
+                                    <li key={link.title}>
+                                        <span onClick={_ => goTo(`/objects/${link.title}`)}>
+                                            {link.title}
+                                        </span>
+                                    </li>
+                                );
+                            })
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
     )
 }

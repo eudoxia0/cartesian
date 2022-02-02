@@ -66,6 +66,12 @@ export default function App() {
         <nav>
           <ul>
             <li>
+              <Link to={`/objects/Index`}>
+                <img src="/home.png" alt="" />
+                <span>Index</span>
+              </Link>
+            </li>
+            <li>
               <Link to={`/objects/${dailyNoteTitle()}`}>
                 <img src="/calendar-day.png" alt="" />
                 <span>Daily Note</span>

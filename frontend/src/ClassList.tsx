@@ -142,7 +142,7 @@ export default function ClassList() {
                                             </td>
                                             <td>
                                                 <IconWidget
-                                                    size={44}
+                                                    size={64}
                                                     initialEmoji={cls.icon_emoji}
                                                     onChange={e => handleEmojiChange(cls, e)}
                                                 />

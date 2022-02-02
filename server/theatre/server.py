@@ -6,7 +6,7 @@ import traceback
 import hashlib
 from typing import Optional, List, Set, Tuple
 
-from flask import make_response, Response, current_app, g
+from flask import make_response, Response, current_app, g, render_template
 from theatre.error import (
     CTError,
     file_not_found,
@@ -780,6 +780,9 @@ def object_search_endpoint():
         "error": None,
     }
 
+@bp.route("/", methods=["GET"])
+def home_endpoint():
+    return render_template('index.html')
 
 #
 # Error handling

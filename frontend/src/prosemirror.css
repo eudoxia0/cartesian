@@ -19,9 +19,10 @@
 }
 
 .ProseMirror blockquote {
-  padding-left: 1em;
+  padding-left: 1rem;
   border-left: 3px solid #eee;
-  margin-left: 0; margin-right: 0;
+  margin-left: 1.5rem;
+  margin-right: 0;
 }
 
 .ProseMirror-example-setup-style img {
@@ -232,8 +233,7 @@
 }
 
 span.wikilink {
-  color:blue;
-  border: 1px solid black;
+  border-bottom: 1px solid #ccc;
 }
 
 span.wikilinkmark {

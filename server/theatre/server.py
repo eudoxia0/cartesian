@@ -388,7 +388,7 @@ def new_object_endpoint():
     class_id: int = form["class_id"]
     directory_id: Optional[int] = form["directory_id"]
     icon_emoji: str = form["icon_emoji"].strip()
-    cover_id: Optional[int] = form["directory_id"]
+    cover_id: Optional[int] = form["cover_id"]
     property_values: dict = form["values"]
     # If an object with this title exists, reject it
     db: Database = get_db()

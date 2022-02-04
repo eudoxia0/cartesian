@@ -185,8 +185,8 @@ export default function ObjectEdit(props: Props) {
                         </div>
                         <div className={styles.spacer}></div>
                         <div className={styles.menuRest}>
-                            <img src="/image.png" alt="" onClick={() => setShowCoverModal(true)} />
-                            <img src="/bin-metal.png" alt="" onClick={handleDelete} />
+                            <img src="/static/image.png" alt="" onClick={() => setShowCoverModal(true)} />
+                            <img src="/static/bin-metal.png" alt="" onClick={handleDelete} />
                         </div>
                     </div>
                     <div>

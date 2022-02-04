@@ -229,7 +229,7 @@ export default function DirectoryTree() {
                         {node?.data?.icon_emoji
                             ?
                             <Emoji emoji={node?.data?.icon_emoji!} size={24} native={true} />
-                            : <img src="/blue-folder.png" alt="" />
+                            : <img src="/static/blue-folder.png" alt="" />
                         }
                         <div className={styles.text}>
                             <Link to={`/directories/${node.id}`}>
@@ -239,7 +239,7 @@ export default function DirectoryTree() {
                         <div className={styles.spacer}></div>
                         <img
                             className={styles.edit}
-                            src="/pencil.png"
+                            src="/static/pencil.png"
                             alt=""
                             onClick={_ => handleEditDirectory(fromTree(node as TreeNode))}
                         />
@@ -264,7 +264,7 @@ export default function DirectoryTree() {
                 initialOpen={true}
             />
             <div className={styles.dir} style={{ marginLeft: 20, marginTop: 20 }}>
-                <img src="/blue-folder.png" alt="" />
+                <img src="/static/blue-folder.png" alt="" />
                 <div className={styles.text}>
                     <Link to={`/uncategorized`}>
                         Uncategorized

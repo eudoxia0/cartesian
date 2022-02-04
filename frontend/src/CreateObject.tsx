@@ -155,7 +155,7 @@ function CreateObjectInternal(props: { defaultTitle: string, classes: Array<Clas
                                 {(cls.icon_emoji !== "")
                                     ?
                                     <Emoji emoji={cls.icon_emoji!} size={24} native={true} />
-                                    : <img src="/classes.png" alt="" />
+                                    : <img src="/static/classes.png" alt="" />
                                 }
                                 {cls.title}
                             </li>

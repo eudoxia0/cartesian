@@ -59,7 +59,7 @@ export default function App() {
       <div className={styles.leftPane}>
         <div className={styles.Logo}>
           <Link to="/">
-            <img src="/coin.png" alt="Logo" />
+            <img src="/static/coin.png" alt="Logo" />
           </Link>
         </div>
         <h1>Cartesian</h1>
@@ -67,55 +67,55 @@ export default function App() {
           <ul>
             <li>
               <Link to={`/objects/Index`}>
-                <img src="/home.png" alt="" />
+                <img src="/static/home.png" alt="" />
                 <span>Index</span>
               </Link>
             </li>
             <li>
               <Link to={`/objects/${dailyNoteTitle()}`}>
-                <img src="/calendar-day.png" alt="" />
+                <img src="/static/calendar-day.png" alt="" />
                 <span>Daily Note</span>
               </Link>
             </li>
             <li>
               <Link to="/files">
-                <img src="/files.png" alt="" />
+                <img src="/static/files.png" alt="" />
                 <span>Files</span>
               </Link>
             </li>
             <li>
               <Link to="/file-upload">
-                <img src="/upload-file.png" alt="" />
+                <img src="/static/upload-file.png" alt="" />
                 <span>Upload File</span>
               </Link>
             </li>
             <li>
               <Link to="/classes">
-                <img src="/classes.png" alt="" />
+                <img src="/static/classes.png" alt="" />
                 <span>Classes</span>
               </Link>
             </li>
             <li>
               <Link to="/create-object">
-                <img src="/plus.png" alt="" />
+                <img src="/static/plus.png" alt="" />
                 <span>Create Object</span>
               </Link>
             </li>
             <li>
               <Link to="/objects">
-                <img src="/table.png" alt="" />
+                <img src="/static/table.png" alt="" />
                 <span>All Objects</span>
               </Link>
             </li>
             <li>
               <Link to="/search">
-                <img src="/magnifier-left.png" alt="" />
+                <img src="/static/magnifier-left.png" alt="" />
                 <span>Search</span>
               </Link>
             </li>
             <li>
               <Link to="/settings">
-                <img src="/equalizer.png" alt="" />
+                <img src="/static/equalizer.png" alt="" />
                 <span>Settings</span>
               </Link>
             </li>

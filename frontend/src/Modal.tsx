@@ -32,11 +32,11 @@ export default function Modal(props: Props) {
                     </div>
                     <div className={styles.buttons}>
                         <button onClick={handleCancel}>
-                            <img src="/cross.png" alt="" />
+                            <img src="/static/cross.png" alt="" />
                             Cancel
                         </button>
                         <button onClick={handleAccept}>
-                            <img src="/tick.png" alt="" />
+                            <img src="/static/tick.png" alt="" />
                             Accept
                         </button>
                     </div>

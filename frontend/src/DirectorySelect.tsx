@@ -1,6 +1,5 @@
 import { DirectoryRec } from "./types";
-import { useAppSelector, selectDirectoryList } from "./store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./DirectorySelect.module.css";
 
 interface Props {
@@ -8,10 +7,23 @@ interface Props {
     onChange: (id: number | null) => void;
 }
 
+interface State {
+    loaded: boolean;
+    directories: Array<DirectoryRec>;
+}
+
 export default function DirectorySelect(props: Props) {
     const [dirId, setDirId] = useState<number>(props.initialValue ? props.initialValue : -1);
 
-    const directoryList = useAppSelector(selectDirectoryList);
+    const [directoryList, setDirectoryList] = useState<State>({ loaded: false, directories: [] });
+
+    useEffect(() => {
+        if (!directoryList.loaded) {
+            fetch("/api/directories")
+                .then(res => res.json())
+                .then((data) => setDirectoryList({ loaded: true, directories: data.data }));
+        }
+    });
 
     function handleChange(id: number) {
         setDirId(id);
@@ -26,7 +38,7 @@ export default function DirectorySelect(props: Props) {
         >
             <option value={-1} >None</option>
             {
-                directoryList.map((dir: DirectoryRec) => {
+                directoryList.directories.map((dir: DirectoryRec) => {
                     return <option key={dir.id} value={dir.id}>{dir.title}</option>
                 })
             }

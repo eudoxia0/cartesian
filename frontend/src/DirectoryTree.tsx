@@ -70,7 +70,7 @@ function TreeNodeComponent(props: { node: TreeNode; depth: number; isOpen: boole
     const node = props.node;
 
     return (
-        <div className={styles.dir} style={{ marginLeft: props.depth * 10 }}>
+        <div className={styles.dir} style={{ marginLeft: props.depth * 17 }}>
             {node.droppable && (
                 <div className={styles.icon} onClick={props.onToggle}>
                     {props.isOpen ? <DownArrow /> : <RightArrow />}
@@ -78,7 +78,7 @@ function TreeNodeComponent(props: { node: TreeNode; depth: number; isOpen: boole
             )}
             {node?.data?.icon_emoji
                 ?
-                <Emoji emoji={node?.data?.icon_emoji!} size={24} native={true} />
+                <Emoji emoji={node?.data?.icon_emoji!} size={20} native={true} />
                 : <img src="/static/blue-folder.png" alt="" />
             }
             <div className={styles.text}>

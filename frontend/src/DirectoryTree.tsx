@@ -1,8 +1,7 @@
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import { Tree } from "@minoru/react-dnd-treeview";
 import styles from "./DirectoryTree.module.css";
 import { DirectoryRec } from "./types";
-import { useAppSelector, useAppDispatch, selectDirectoryList, replaceDirectoryList } from "./store";
 import { Emoji } from "emoji-mart";
 import Modal from "./Modal";
 import IconWidget from "./IconWidget";
@@ -67,15 +66,90 @@ function DownArrow() {
     );
 }
 
-export default function DirectoryTree() {
-    const directoryList = useAppSelector(selectDirectoryList);
-    const dispatch = useAppDispatch();
+function TreeNodeComponent(props: { node: TreeNode; depth: number; isOpen: boolean; handleEditDirectory: (dir: DirectoryRec) => void; onToggle: () => void; }) {
+    const node = props.node;
 
+    return (
+        <div className={styles.dir} style={{ marginLeft: props.depth * 10 }}>
+            {node.droppable && (
+                <div className={styles.icon} onClick={props.onToggle}>
+                    {props.isOpen ? <DownArrow /> : <RightArrow />}
+                </div>
+            )}
+            {node?.data?.icon_emoji
+                ?
+                <Emoji emoji={node?.data?.icon_emoji!} size={24} native={true} />
+                : <img src="/static/blue-folder.png" alt="" />
+            }
+            <div className={styles.text}>
+                <Link to={`/directories/${node.id}`}>
+                    {node.text}
+                </Link>
+            </div>
+            <div className={styles.spacer}></div>
+            <img
+                className={styles.edit}
+                src="/static/pencil.png"
+                alt=""
+                onClick={_ => props.handleEditDirectory(fromTree(node as TreeNode))}
+            />
+        </div>
+    );
+}
+
+function TreeWrapper(props: { directoryList: Array<DirectoryRec>; handleEditDirectory: (dir: DirectoryRec) => void; handleDrop: any }) {
+    return (
+        <Tree
+            rootId={0}
+            render={(node, { depth, isOpen, onToggle }) => (
+                <TreeNodeComponent
+                    node={node as TreeNode}
+                    depth={depth}
+                    isOpen={isOpen}
+                    handleEditDirectory={props.handleEditDirectory}
+                    onToggle={onToggle} />
+            )}
+            tree={props.directoryList.map(asTree)}
+            onDrop={props.handleDrop}
+            classes={{
+                placeholder: styles.placeholder,
+            }}
+            sort={false}
+            insertDroppableFirst={false}
+            canDrop={(tree, { dragSource, dropTargetId }) => {
+                if (dragSource?.parent === dropTargetId) {
+                    return true;
+                }
+            }}
+            dropTargetOffset={5}
+            placeholderRender={(node, { depth }) => (
+                <CustomPlaceholder node={node} depth={depth} />
+            )}
+            initialOpen={true}
+        />
+    );
+}
+
+interface State {
+    loaded: boolean;
+    directories: Array<DirectoryRec>;
+}
+
+export default function DirectoryTree() {
     const [showEdit, setShowEdit] = useState<boolean>(false);
     const [editDir, setEditDir] = useState<DirectoryRec | null>(null);
     const [editEmoji, setEditEmoji] = useState<string>("");
     const [editTitle, setEditTitle] = useState<string>("");
 
+    const [directoryList, setDirectoryList] = useState<State>({ loaded: false, directories: [] });
+
+    useEffect(() => {
+        if (!directoryList.loaded) {
+            fetch("/api/directories")
+                .then(res => res.json())
+                .then((data) => setDirectoryList({ loaded: true, directories: data.data }));
+        }
+    });
 
     function handleDrop(newTreeData: Array<TreeNode>) {
         newTreeData.forEach((tree: TreeNode) => {
@@ -99,7 +173,10 @@ export default function DirectoryTree() {
                     if (data.error) {
                         window.alert(data.error.title + ": " + data.error.message);
                     } else {
-                        dispatch(replaceDirectoryList(newTreeData.map(fromTree)));
+                        setDirectoryList({
+                            loaded: directoryList.loaded,
+                            directories: newTreeData.map(fromTree),
+                        });
                     }
                 })
         });
@@ -135,7 +212,10 @@ export default function DirectoryTree() {
                 if (data.error) {
                     window.alert(data.error.title + ": " + data.error.message);
                 } else {
-                    dispatch(replaceDirectoryList([...directoryList, data.data]));
+                    setDirectoryList({
+                        loaded: directoryList.loaded,
+                        directories: [...directoryList.directories, data.data],
+                    });
                 }
             });
     }
@@ -174,13 +254,14 @@ export default function DirectoryTree() {
                 if (data.error) {
                     window.alert(data.error.title + ": " + data.error.message);
                 } else {
-                    const existing = directoryList.filter((d: DirectoryRec) => (d.id !== dir.id));
-                    dispatch(
-                        replaceDirectoryList([
+                    const existing = directoryList.directories.filter((d: DirectoryRec) => (d.id !== dir.id));
+                    setDirectoryList({
+                        loaded: directoryList.loaded,
+                        directories: [
                             ...existing,
                             data.data
-                        ])
-                    );
+                        ],
+                    });
                 }
             });
     }
@@ -205,64 +286,24 @@ export default function DirectoryTree() {
                 if (data.error) {
                     window.alert(data.error.title + ": " + data.error.message);
                 } else {
-                    const existing = directoryList.filter((d: DirectoryRec) => (d.id !== dir.id));
-                    dispatch(
-                        replaceDirectoryList([
+                    const existing = directoryList.directories.filter((d: DirectoryRec) => (d.id !== dir.id));
+                    setDirectoryList({
+                        loaded: directoryList.loaded,
+                        directories: [
                             ...existing,
-                        ])
-                    );
+                        ],
+                    });
                 }
             });
     }
 
     return (
         <div className={styles.DirectoryTree}>
-            <Tree
-                rootId={0}
-                render={(node, { depth, isOpen, onToggle }) => (
-                    <div className={styles.dir} style={{ marginLeft: depth * 10 }}>
-                        {node.droppable && (
-                            <div className={styles.icon} onClick={onToggle}>
-                                {isOpen ? <DownArrow /> : <RightArrow />}
-                            </div>
-                        )}
-                        {node?.data?.icon_emoji
-                            ?
-                            <Emoji emoji={node?.data?.icon_emoji!} size={24} native={true} />
-                            : <img src="/static/blue-folder.png" alt="" />
-                        }
-                        <div className={styles.text}>
-                            <Link to={`/directories/${node.id}`}>
-                                {node.text}
-                            </Link>
-                        </div>
-                        <div className={styles.spacer}></div>
-                        <img
-                            className={styles.edit}
-                            src="/static/pencil.png"
-                            alt=""
-                            onClick={_ => handleEditDirectory(fromTree(node as TreeNode))}
-                        />
-                    </div>
-                )}
-                tree={directoryList.map(asTree)}
-                onDrop={handleDrop as any}
-                classes={{
-                    placeholder: styles.placeholder,
-                }}
-                sort={false}
-                insertDroppableFirst={false}
-                canDrop={(tree, { dragSource, dropTargetId }) => {
-                    if (dragSource?.parent === dropTargetId) {
-                        return true;
-                    }
-                }}
-                dropTargetOffset={5}
-                placeholderRender={(node, { depth }) => (
-                    <CustomPlaceholder node={node} depth={depth} />
-                )}
-                initialOpen={true}
-            />
+            {directoryList.directories.length > 0 ?
+                <TreeWrapper directoryList={directoryList.directories} handleDrop={handleDrop as any} handleEditDirectory={handleEditDirectory} />
+                :
+                <span></span>
+            }
             <div className={styles.dir} style={{ marginLeft: 20, marginTop: 20 }}>
                 <img src="/static/blue-folder.png" alt="" />
                 <div className={styles.text}>

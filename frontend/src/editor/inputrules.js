@@ -47,7 +47,7 @@ function handleInsertCheckbox(nodeType) {
   return (state, _, start, end) => {
     let tr = state.tr;
     tr = tr.delete(start, end);
-    tr = tr.insert(start - 1, nodeType.create({ checked: false }));
+    tr = tr.insert(start, nodeType.create({ checked: false }));
     return tr;
   };
 }

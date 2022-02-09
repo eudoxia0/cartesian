@@ -51,7 +51,7 @@ export default function ObjectListInDirectory(props: { id: number }) {
                         </thead>
                         <tbody>
                             {
-                                objects.map(obj => (
+                                objects.sort((a: ObjectSummaryRec, b: ObjectSummaryRec) => a.title.localeCompare(b.title)).map(obj => (
                                     <tr key={obj.id}>
                                         <td>
                                             <Link to={`/objects/${obj.title}`}>

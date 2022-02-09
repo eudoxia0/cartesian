@@ -1,5 +1,4 @@
 import { Routes, Route, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import Home from "./Home";
 import FileList from "./FileList";
 import styles from "./App.module.css";
@@ -9,7 +8,6 @@ import DirectoryTree from "./DirectoryTree";
 import ClassList from "./ClassList";
 import ClassDetail from "./ClassDetail";
 import CreateObject from "./CreateObject";
-import { useAppDispatch, replaceDirectoryList } from "./store";
 import ObjectList from "./ObjectList";
 import ObjectView from "./ObjectView";
 import 'emoji-mart/css/emoji-mart.css';
@@ -41,19 +39,6 @@ function dailyNoteTitle(): string {
 }
 
 export default function App() {
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    if (!loaded) {
-      fetch("/api/directories")
-        .then(res => res.json())
-        .then((data) => {
-          setLoaded(true);
-          dispatch(replaceDirectoryList(data.data));
-        });
-    }
-  });
   return (
     <div className={styles.App}>
       <div className={styles.leftPane}>

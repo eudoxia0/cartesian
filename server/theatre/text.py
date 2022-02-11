@@ -163,6 +163,9 @@ class FileBlock:
     filename: str
     mime_type: str
 
+    def __hash__(self):
+        return hash((self.id, self.filename, self.mime_type))
+
 
 #
 # The Document class.

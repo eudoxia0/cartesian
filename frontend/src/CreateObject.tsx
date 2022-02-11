@@ -6,6 +6,7 @@ import { Emoji } from "emoji-mart";
 import Editor from "./Editor";
 import FilePropWidget from "./FilePropWidget";
 import DirectorySelect from "./DirectorySelect";
+import { useNavigate } from "react-router-dom";
 
 interface Props2 {
     cls: ClassRec;
@@ -85,6 +86,7 @@ interface Props {
 }
 
 function CreateObjectForClass(props: Props) {
+    let navigate = useNavigate();
     const [title, setTitle] = useState<string>(props.defaultTitle);
     const [dirId, setDirId] = useState<number | null>(null);
 
@@ -115,7 +117,7 @@ function CreateObjectForClass(props: Props) {
                 if (data.error) {
                     window.alert(data.error.title + ": " + data.error.message);
                 } else {
-                    console.log(data.data);
+                    navigate(`/objects/${data.data.title}`);
                 }
             });
     }

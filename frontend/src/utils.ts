@@ -32,3 +32,19 @@ export function humanizeFileSize(size: number): string {
     const units = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
     return `${size.toFixed(2)} ${units[unitIdx]}`;
 }
+
+export function dailyNoteTitle(): string {
+    const date = new Date();
+    let [year, month, day] = [
+        date.getFullYear().toString(),
+        (date.getMonth() + 1).toString(),
+        date.getDate().toString()
+    ];
+    if (month.length < 2) {
+        month = '0' + month;
+    }
+    if (day.length < 2) {
+        day = '0' + day;
+    }
+    return `${year}-${month}-${day}`;
+}

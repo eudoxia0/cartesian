@@ -15,28 +15,7 @@ import Settings from "./Settings";
 import DirectoryContents from "./DirectoryContents";
 import UncategorizedObjects from "./UncategorizedObjects";
 import SearchPage from "./SearchPage";
-
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December"
-];
-
-function dailyNoteTitle(): string {
-  const date = new Date();
-  const [month, day, year] = [date.getMonth(), date.getDate(), date.getFullYear()];
-  const monthName = monthNames[month];
-  return `${monthName} ${day}, ${year}`;
-}
+import { dailyNoteTitle } from "./utils";
 
 export default function App() {
   return (

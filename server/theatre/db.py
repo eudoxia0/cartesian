@@ -398,6 +398,13 @@ class ObjectDetailRec:
         return d
 
 
+@dataclass(frozen=True)
+class Stats:
+    object_count: int
+    link_count: int
+    file_count: int
+
+
 #
 # Database object
 #
@@ -1772,3 +1779,26 @@ class Database(object):
             )
             for row in rows
         ]
+
+    #
+    # Stats methods
+    #
+
+    def get_stats(self) -> Stats:
+        def get_count(table: str) -> int:
+            cur: Cursor = self.conn.cursor()
+            rows: List[Row] = cur.execute(
+                f"""
+                select
+                    count(id)
+                from
+                    {table};
+                """
+            ).fetchall()
+            return rows[0][0]
+
+        return Stats(
+            object_count=get_count("objects"),
+            link_count=get_count("links"),
+            file_count=get_count("files"),
+        )

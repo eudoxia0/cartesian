@@ -3,6 +3,7 @@ import { createSchema, createPlugins } from "./prosemirror";
 import { Fragment, Node, Slice } from "prosemirror-model";
 import { useNavigate } from 'react-router-dom';
 import { EditorView, Decoration, NodeView } from "prosemirror-view";
+import styles from "./Editor.module.css";
 
 const HTTP_LINK_REGEX = /\bhttps?:\/\/[\w_\-#\/\.]+/g
 let linkify = function (fragment: Fragment): Fragment {
@@ -67,61 +68,65 @@ export default function Editor(props: Props) {
         props.onChange(newState.doc.toJSON());
     }
 
-    return <ProseMirror
-        state={state}
-        onChange={handleChange}
-        transformPasted={function (slice: Slice) {
-            return new Slice(linkify(slice.content), slice.openStart, slice.openEnd);
-        }}
-        handleClick={function (view: EditorView, pos: number, event: MouseEvent): boolean {
-            event.preventDefault();
-            const node: any = event.target as any;
-            if (node.title) {
-                const title: string = node.title;
-                onLinkClick(title);
-            }
-            return true;
-        }}
-        nodeViews={
-            {
-                checkbox: (node: Node, view: EditorView, getPos: () => number, decorations: Decoration[]): NodeView => {
-                    const dom = document.createElement("checkbox");
-                    const checkbox = document.createElement("input");
-
-                    checkbox.type = "checkbox";
-                    checkbox.contentEditable = "false";
-                    checkbox.addEventListener("change", event => {
-                        const { checked } = event.target as any;
-
-                        if (typeof getPos === "function") {
-                            view.dispatch(
-                                view.state.tr.setNodeMarkup(getPos(), undefined, {
-                                    checked
-                                })
-                            );
-                        }
-                    });
-
-                    if (node.attrs.checked) {
-                        checkbox.setAttribute("checked", "checked");
+    return (
+        <div className={styles.editor}>
+            <ProseMirror
+                state={state}
+                onChange={handleChange}
+                transformPasted={function (slice: Slice) {
+                    return new Slice(linkify(slice.content), slice.openStart, slice.openEnd);
+                }}
+                handleClick={function (view: EditorView, pos: number, event: MouseEvent): boolean {
+                    event.preventDefault();
+                    const node: any = event.target as any;
+                    if (node.title) {
+                        const title: string = node.title;
+                        onLinkClick(title);
                     }
+                    return true;
+                }}
+                nodeViews={
+                    {
+                        checkbox: (node: Node, view: EditorView, getPos: () => number, decorations: Decoration[]): NodeView => {
+                            const dom = document.createElement("checkbox");
+                            const checkbox = document.createElement("input");
 
-                    dom.append(checkbox);
+                            checkbox.type = "checkbox";
+                            checkbox.contentEditable = "false";
+                            checkbox.addEventListener("change", event => {
+                                const { checked } = event.target as any;
 
-                    return {
-                        dom,
-                        update: updatedNode => {
-                            if (updatedNode.attrs.checked) {
+                                if (typeof getPos === "function") {
+                                    view.dispatch(
+                                        view.state.tr.setNodeMarkup(getPos(), undefined, {
+                                            checked
+                                        })
+                                    );
+                                }
+                            });
+
+                            if (node.attrs.checked) {
                                 checkbox.setAttribute("checked", "checked");
-                            } else {
-                                checkbox.removeAttribute("checked");
                             }
 
-                            return true;
-                        }
-                    };
-                },
-            }
-        }
-    />;
+                            dom.append(checkbox);
+
+                            return {
+                                dom,
+                                update: updatedNode => {
+                                    if (updatedNode.attrs.checked) {
+                                        checkbox.setAttribute("checked", "checked");
+                                    } else {
+                                        checkbox.removeAttribute("checked");
+                                    }
+
+                                    return true;
+                                }
+                            };
+                        },
+                    }
+                }
+            />
+        </div>
+    );
 }

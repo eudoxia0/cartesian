@@ -404,6 +404,13 @@ class Stats:
     link_count: int
     file_count: int
 
+    def to_json(self) -> dict:
+        return {
+            "object_count": self.object_count,
+            "link_count": self.link_count,
+            "file_count": self.file_count,
+        }
+
 
 #
 # Database object

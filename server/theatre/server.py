@@ -780,9 +780,19 @@ def object_search_endpoint():
         "error": None,
     }
 
+
+@bp.route("/api/stats", methods=["POST"])
+def stats_endpoint():
+    return {
+        "data": get_db().get_stats().to_json(),
+        "error": None,
+    }
+
+
 @bp.route("/", methods=["GET"])
 def home_endpoint():
-    return render_template('index.html')
+    return render_template("index.html")
+
 
 #
 # Error handling

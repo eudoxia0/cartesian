@@ -114,7 +114,7 @@ function TreeWrapper(props: { directoryList: Array<DirectoryRec>; handleEditDire
             classes={{
                 placeholder: styles.placeholder,
             }}
-            sort={false}
+            sort={true}
             insertDroppableFirst={false}
             canDrop={(tree, { dragSource, dropTargetId }) => {
                 if (dragSource?.parent === dropTargetId) {

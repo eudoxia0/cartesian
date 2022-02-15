@@ -781,7 +781,7 @@ def object_search_endpoint():
     }
 
 
-@bp.route("/api/stats", methods=["POST"])
+@bp.route("/api/stats", methods=["GET"])
 def stats_endpoint():
     return {
         "data": get_db().get_stats().to_json(),

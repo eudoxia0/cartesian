@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@benrbray/prosemirror-math": "^0.2.2",
+    "@benrbray/prosemirror-math": "^1.0.0",
     "@minoru/react-dnd-treeview": "^1.6.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
